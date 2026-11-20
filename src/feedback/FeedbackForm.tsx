@@ -49,8 +49,17 @@ export function FeedbackButton({ place }: { place: 'top' | 'foot' }) {
 export function PageFoot() {
   return (
     <footer className="page-foot">
-      <AboutButton place="foot" />
-      <FeedbackButton place="foot" />
+      <div className="page-foot__tools">
+        <AboutButton place="foot" />
+        <FeedbackButton place="foot" />
+      </div>
+      {/* Dấu ấn tác giả: một dòng nhỏ cuối trang, bấm vào là trang GitHub của Tài */}
+      <p className="credit">
+        Made by{' '}
+        <a href="https://github.com/thanhtaiffff-dot" target="_blank" rel="noopener noreferrer">
+          Thành Tài
+        </a>
+      </p>
     </footer>
   )
 }

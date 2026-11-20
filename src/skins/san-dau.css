@@ -1,0 +1,105 @@
+/* 1. Sân đấu: đêm chung kết dưới đèn sân. Xanh đêm, vàng giải đấu, chữ in hoa hẹp như bảng tỉ số trên tivi. */
+:root[data-skin='san-dau'] {
+  --bg: #0a1430;
+  --surface: #101d42;
+  --surface-2: #162755;
+  --surface-3: #1e3368;
+  --ink: #f3f6ff;
+  --muted: #8d9bc2;
+  --line: #22356b;
+  --accent: #ffd23f;
+  --accent-ink: #1a1400;
+  --accent-soft: #3a3410;
+  --led: #ffd23f;
+  --danger: #ff8a7a;
+  --danger-strong: #e5383b;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 14px 40px rgb(0 0 0 / 0.5);
+  --font-display: 'Big Shoulders Display', 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+
+  --page-bg:
+    radial-gradient(110% 55% at 50% -12%, rgb(90 130 255 / 0.32), transparent 62%),
+    radial-gradient(45% 35% at 0% 0%, rgb(255 210 63 / 0.1), transparent 70%),
+    radial-gradient(45% 35% at 100% 0%, rgb(255 210 63 / 0.1), transparent 70%), linear-gradient(180deg, #0a1430, #050b1c);
+  --panel: linear-gradient(180deg, #13214a, #0e1a3b);
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px #22356b;
+  --panel-radius: 6px;
+  --btn: #18295a;
+  --btn-hover: #203571;
+  --btn-edge: 0 0 0 1px #2b4284;
+  --btn-radius: 6px;
+  --btn-font: var(--font-display);
+  --btn-weight: 800;
+  --btn-transform: uppercase;
+  --btn-tracking: 0.06em;
+  --primary: #ffd23f;
+  --primary-hover: #ffe071;
+  --primary-ink: #1a1400;
+  --primary-edge: 0 6px 22px rgb(255 210 63 / 0.28);
+  --chip: #132250;
+  --chip-hover: #1b2d63;
+  --chip-radius: 4px;
+  --pick-on: #1b2d63;
+  --pick-on-edge: 0 0 0 2px #ffd23f;
+  --well: #071029;
+  --well-edge: inset 0 0 0 1px #22356b;
+  --field-radius: 4px;
+  --signal-ring: 0 0 0 2px #ffd23f, 0 0 22px rgb(255 210 63 / 0.35);
+  --tray: 10px;
+  --tray-bg: linear-gradient(180deg, #1d3070, #0e1a3b);
+  --tray-edge: 0 0 0 1px #2b4284;
+  --tray-radius: 6px;
+  --tray-shadow: 0 30px 60px rgb(0 0 0 / 0.5), 0 0 90px rgb(90 130 255 / 0.16);
+  --board-radius: 2px;
+  --clock-font: var(--font-display);
+  --clock-weight: 800;
+  --clock-size: 2.15rem;
+  --clock-radius: 4px;
+  --clock-tracking: 0.03em;
+  --clock-w: #f3f6ff;
+  --clock-w-ink: #0a1430;
+  --clock-w-edge: 0 0 0 1px #2b4284;
+  --clock-b: #040919;
+  --clock-b-ink: #ffd23f;
+  --clock-b-edge: 0 0 0 1px #2b4284;
+  --heading-weight: 800;
+  --heading-transform: uppercase;
+  --heading-tracking: 0.04em;
+  --brand-weight: 900;
+  --brand-tracking: 0.14em;
+  --brand-mark: conic-gradient(from 45deg, #ffd23f 0 25%, #f3f6ff 0 50%, #ffd23f 0 75%, #f3f6ff 0);
+  --brand-mark-radius: 4px;
+  --move-hover: #162755;
+  --move-on: #ffd23f;
+  --move-on-ink: #1a1400;
+  --avatar-ring: 0 0 0 2px #0a1430, 0 0 0 3.5px #ffd23f;
+  --tip: #ffd23f;
+  --tip-ink: #1a1400;
+  --crown: #ffd23f;
+}
+
+[data-skin='san-dau'] .brand {
+  font-size: 1.25rem;
+}
+
+[data-skin='san-dau'] .player__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Vạch vàng dưới đầu trang như mép sân */
+[data-skin='san-dau'] .topbar {
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgb(255 210 63 / 0.55);
+}
+
+[data-skin='san-dau'] .scorecard__num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #ffd23f;
+}

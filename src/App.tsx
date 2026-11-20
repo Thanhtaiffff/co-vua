@@ -5,6 +5,8 @@ import type { Key } from '@lichess-org/chessground/types'
 import { ActionButton } from './components/ActionButton'
 import { Board } from './components/Board'
 import { BoardTools } from './components/BoardTools'
+import { EndFx } from './components/EndFx'
+import { endFxEvent, type EndFxEvent } from './components/endFxEvent'
 import { MoveList, MoveStrip } from './components/MoveList'
 import { PlayerBar, type ClockFace } from './components/PlayerBar'
 import { PlayerNames } from './components/PlayerNames'
@@ -89,15 +91,19 @@ export default function App() {
 
   // Tiếng hết ván: kêu đúng lúc ván vừa kết thúc, không kêu lại khi tải lại trang. Hết ván vì một nước đi
   // (chiếu bí, hòa) thì chờ tiếng quân đặt xuống xong; hết giờ thì kêu ngay.
+  // Cùng lúc đó hiện hiệu ứng hết ván trên bàn cờ (chơi chung một máy: luôn là hiệu ứng mừng bên thắng).
   const lastKind = useRef(status.kind)
+  const [endFx, setEndFx] = useState<EndFxEvent | null>(null)
+  const winner = 'winner' in status ? status.winner : null
   useEffect(() => {
     if (lastKind.current === 'playing' && status.kind !== 'playing') {
       const decisive = status.kind === 'checkmate' || status.kind === 'timeout'
       const byClock = status.kind === 'timeout' || status.kind === 'timeoutDraw'
       playSound(decisive ? 'end' : 'draw', byClock ? 0 : END_DELAY)
+      setEndFx(endFxEvent(decisive ? 'win' : 'draw', winner))
     }
     lastKind.current = status.kind
-  }, [status.kind])
+  }, [status.kind, winner])
 
   // Báo sắp hết giờ: kêu một lần khi đồng hồ đang chạy tụt xuống dưới mức đỏ. Được cộng giờ lên hẳn
   // (quá 1,5 lần mức đỏ), hoặc đi lại, ván mới, thì lần sau tụt xuống lại báo tiếp.
@@ -235,6 +241,7 @@ export default function App() {
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
             {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={cancelPromotion} />}
+            <EndFx event={endFx} />
           </div>
           <PlayerBar
             color={bottom}

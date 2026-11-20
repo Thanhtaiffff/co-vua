@@ -1,0 +1,643 @@
+/* Lớp chất liệu dùng chung cho mọi kiểu giao diện, nạp sau cùng (main.tsx) để phủ lên các file CSS khác.
+   Bố cục nằm ở index.css, online.css...; file này chỉ lo "vỏ": nền trang, khối nổi, nút, ô chọn, ô nhập, khay bàn cờ,
+   đồng hồ. Mọi thứ lấy từ biến (token) bên dưới. Mỗi kiểu giao diện (src/skins/<tên>.css) chỉ cần đặt lại các biến này
+   trong :root[data-skin='<tên>'], cộng vài nét riêng nếu cần. Giá trị mặc định ở đây là một kiểu tối trung tính. */
+:root {
+  --page-bg: var(--bg);
+
+  /* Khối nổi: thẻ, cột nước đi, thẻ kết quả, khung chat, bảng nổi */
+  --panel: var(--surface);
+  --panel-edge: 0 0 0 1px var(--line);
+  --panel-radius: 16px;
+
+  /* Nút thường và nút chính */
+  --btn: var(--surface-2);
+  --btn-hover: var(--surface-3);
+  --btn-edge: 0 0 0 1px var(--line);
+  --btn-ink: var(--ink);
+  --btn-radius: 999px;
+  --btn-font: var(--font-body);
+  --btn-weight: 500;
+  --btn-transform: none;
+  --btn-tracking: normal;
+  --btn-press: translateY(1px);
+  --primary: var(--accent);
+  --primary-hover: var(--accent);
+  --primary-edge: none;
+  --primary-ink: var(--accent-ink);
+  --icon-ink: var(--ink);
+
+  /* Ô chọn (giờ, màu quân, loại góp ý...) */
+  --chip: var(--surface-2);
+  --chip-hover: var(--surface-3);
+  --chip-edge: var(--btn-edge);
+  --chip-radius: 10px;
+  --pick-on: var(--surface-3);
+  --pick-on-edge: 0 0 0 2px var(--accent);
+
+  /* Ô nhập, rãnh công tắc */
+  --well: var(--bg);
+  --well-edge: inset 0 0 0 1px var(--line);
+  --field-radius: 12px;
+
+  /* Tín hiệu: tới lượt, nút đang bật, lời xin của đối thủ */
+  --signal-ring: 0 0 0 2px var(--led);
+  --danger-edge: 0 0 0 1px var(--danger-strong);
+
+  /* Bảng nổi */
+  --sheet-edge: var(--panel-edge), var(--shadow);
+  --backdrop: rgb(0 0 0 / 0.55);
+
+  /* Khay quanh bàn cờ */
+  --tray: 8px;
+  --tray-bg: var(--surface-2);
+  --tray-edge: var(--panel-edge);
+  --tray-radius: 14px;
+  --tray-shadow: 0 20px 44px rgb(0 0 0 / 0.35);
+  --board-radius: 4px;
+
+  /* Đồng hồ: bên Trắng hộp sáng, bên Đen hộp tối (quy ước đã chọn) */
+  --clock-font: var(--font-num);
+  --clock-weight: 500;
+  --clock-size: 1.75rem;
+  --clock-radius: 10px;
+  --clock-tracking: 0.01em;
+  --clock-w: #f3f3f1;
+  --clock-w-ink: #121212;
+  --clock-w-edge: 0 0 0 1px var(--line);
+  --clock-b: #121212;
+  --clock-b-ink: #f3f3f1;
+  --clock-b-edge: 0 0 0 1px var(--line);
+  --clock-idle: 0.55;
+
+  /* Chữ */
+  --font-num: var(--font-body);
+  --heading-font: var(--font-display);
+  --heading-weight: 700;
+  --heading-transform: none;
+  --heading-tracking: -0.01em;
+  --brand-font: var(--font-display);
+  --brand-weight: 600;
+  --brand-transform: uppercase;
+  --brand-tracking: 0.3em;
+  --brand-mark: radial-gradient(circle, var(--bg) 0 44%, transparent 46%), conic-gradient(from 200deg, var(--ink), var(--muted), var(--ink));
+  --brand-mark-radius: 50%;
+
+  /* Cột nước đi, ảnh đại diện, bong bóng chữ */
+  --move-hover: var(--surface-2);
+  --move-on: var(--surface-3);
+  --move-on-ink: var(--ink);
+  --avatar-ring: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--line);
+  --tip: var(--ink);
+  --tip-ink: var(--bg);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--page-bg);
+  background-attachment: fixed;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+[role='button'] {
+  touch-action: manipulation;
+}
+
+/* ---------- Chữ: tên web, tiêu đề ---------- */
+.brand {
+  font-family: var(--brand-font);
+  font-weight: var(--brand-weight);
+  text-transform: var(--brand-transform);
+  letter-spacing: var(--brand-tracking);
+}
+
+.brand__mark {
+  border-radius: var(--brand-mark-radius);
+  background: var(--brand-mark);
+}
+
+.card__title,
+.sound-sheet__title,
+.theme-panel__title,
+.result__title {
+  font-family: var(--heading-font);
+  font-weight: var(--heading-weight);
+  text-transform: var(--heading-transform);
+  letter-spacing: var(--heading-tracking);
+  text-wrap: balance;
+}
+
+[data-tip]::after {
+  background: var(--tip);
+  color: var(--tip-ink);
+}
+
+/* ---------- Khối nổi ---------- */
+.card,
+.tc,
+.moves,
+.result,
+.scorecard,
+.chat,
+.offer,
+.strip,
+.promotion__panel {
+  border-color: transparent;
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+}
+
+.card,
+.tc,
+.moves,
+.result,
+.scorecard,
+.chat,
+.offer {
+  border-radius: var(--panel-radius);
+}
+
+.strip {
+  border-radius: calc(var(--panel-radius) - 2px);
+}
+
+.offer {
+  box-shadow: var(--panel-edge), var(--signal-ring);
+}
+
+.offer--mine {
+  box-shadow: var(--panel-edge);
+}
+
+.result {
+  border-left-width: 1px;
+}
+
+.result--win {
+  box-shadow: var(--panel-edge), inset 4px 0 0 var(--led);
+}
+
+/* ---------- Nút ---------- */
+.btn {
+  padding: 11px 16px;
+  border: 0;
+  border-radius: var(--btn-radius);
+  background: var(--btn);
+  box-shadow: var(--btn-edge);
+  color: var(--btn-ink);
+  font-family: var(--btn-font);
+  font-weight: var(--btn-weight);
+  text-transform: var(--btn-transform);
+  letter-spacing: var(--btn-tracking);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--btn-hover);
+  color: var(--btn-ink);
+}
+
+.btn:active:not(:disabled),
+.act:active:not(:disabled),
+.icon-btn:active,
+.board-tool:active:not(:disabled) {
+  transform: var(--btn-press);
+}
+
+.btn--primary,
+.btn--primary:hover:not(:disabled) {
+  background: var(--primary);
+  box-shadow: var(--primary-edge);
+  color: var(--primary-ink);
+  font-weight: 700;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn--confirm,
+.btn--confirm:hover:not(:disabled) {
+  background: var(--danger-strong);
+  box-shadow: var(--danger-edge);
+  color: #fff;
+}
+
+.icon-btn,
+.board-tool,
+.act,
+.names__swap,
+.sound-sheet__close,
+.chat__emoji-btn {
+  border: 0;
+  background: var(--btn);
+  box-shadow: var(--btn-edge);
+  color: var(--icon-ink);
+}
+
+.icon-btn,
+.board-tool,
+.sound-sheet__close {
+  border-radius: var(--btn-radius);
+}
+
+.act {
+  border-radius: var(--btn-radius);
+}
+
+.icon-btn:hover,
+.board-tool:hover:not(:disabled),
+.act:hover:not(:disabled),
+.names__swap:hover,
+.sound-sheet__close:hover {
+  background: var(--btn-hover);
+  color: var(--icon-ink);
+}
+
+.board-tool--on,
+.board-tool--on:hover:not(:disabled),
+.act--on,
+.act--on:disabled,
+.theme-btn[aria-expanded='true'] {
+  color: var(--led);
+  box-shadow: var(--btn-edge), var(--signal-ring);
+}
+
+.act--danger,
+.act--danger:hover:not(:disabled) {
+  background: var(--danger-strong);
+  box-shadow: var(--danger-edge);
+  color: #fff;
+}
+
+.act--danger[data-tip]::after {
+  background: var(--danger-strong);
+  color: #fff;
+}
+
+.nav-btn {
+  border: 0;
+  border-radius: var(--btn-radius);
+  background: var(--chip);
+  box-shadow: var(--chip-edge);
+  color: var(--muted);
+}
+
+.nav-btn:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.nav-btn--live,
+.nav-btn--live:hover:not(:disabled) {
+  background: var(--primary);
+  box-shadow: var(--primary-edge);
+  color: var(--primary-ink);
+}
+
+.names__swap {
+  border-radius: min(var(--btn-radius), 12px);
+}
+
+.mode {
+  background: var(--well);
+  box-shadow: var(--well-edge);
+  border-radius: var(--btn-radius);
+}
+
+.mode__link {
+  border-radius: var(--btn-radius);
+  font-family: var(--btn-font);
+}
+
+.mode__link[aria-current='page'] {
+  background: var(--btn);
+  box-shadow: var(--btn-edge);
+  color: var(--btn-ink);
+}
+
+/* ---------- Ô chọn ---------- */
+.tc__choice,
+.color-choice,
+.fb-kind,
+.sound-event,
+.theme-chip,
+.chat__chip {
+  border-color: transparent;
+  background: var(--chip);
+  box-shadow: var(--chip-edge);
+  color: var(--ink);
+}
+
+.tc__choice {
+  border-radius: var(--chip-radius);
+  font-family: var(--btn-font);
+  font-weight: 500;
+}
+
+.tc__choice:hover,
+.color-choice:hover,
+.fb-kind:hover,
+.sound-event:hover {
+  border-color: transparent;
+  background: var(--chip-hover);
+}
+
+.tc__choice--on,
+.tc__choice--on:hover,
+.sound-event--on,
+.sound-event--on:hover {
+  background: var(--primary);
+  box-shadow: var(--primary-edge);
+  color: var(--primary-ink);
+}
+
+.color-choice {
+  border-radius: calc(var(--chip-radius) + 2px);
+  font-weight: 500;
+}
+
+.color-choice--on,
+.color-choice--on:hover,
+.fb-kind--on,
+.fb-kind--on:hover,
+.theme-chip--on,
+.theme-chip--on:hover {
+  border-color: transparent;
+  background: var(--pick-on);
+  box-shadow: var(--chip-edge), var(--pick-on-edge);
+}
+
+.sound-event,
+.chat__chip {
+  border-radius: var(--btn-radius);
+}
+
+.seg {
+  background: var(--well);
+  box-shadow: var(--well-edge);
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--btn);
+  box-shadow: var(--btn-edge);
+  color: var(--btn-ink);
+}
+
+/* ---------- Ô nhập ---------- */
+.field__input,
+.fb-input,
+.chat__input {
+  border-color: transparent;
+  background: var(--well);
+  box-shadow: var(--well-edge);
+  color: var(--ink);
+}
+
+.field__input {
+  border-radius: var(--field-radius);
+}
+
+.switch__track {
+  border-color: transparent;
+  background: var(--well);
+  box-shadow: var(--well-edge);
+}
+
+.switch input:checked + .switch__track {
+  border-color: transparent;
+  background: var(--led);
+  box-shadow: none;
+}
+
+/* ---------- Bảng nổi ---------- */
+.sound-sheet,
+.theme-panel {
+  border-color: transparent;
+  background: var(--panel);
+  box-shadow: var(--sheet-edge);
+}
+
+.sound-sheet {
+  border-radius: var(--panel-radius);
+}
+
+.sound-sheet__head,
+.sound-sheet__foot,
+.chat__head,
+.about__credits {
+  border-color: var(--line);
+}
+
+.sound-sheet__foot {
+  background: var(--surface-2);
+}
+
+.sound-sheet::backdrop {
+  background: var(--backdrop);
+}
+
+/* ---------- Thanh người chơi ---------- */
+.player,
+.player--active {
+  --bar-bg: transparent;
+  padding-inline: 2px;
+  background: none;
+}
+
+.player__name {
+  font-weight: 600;
+}
+
+.player__turn {
+  color: var(--led);
+}
+
+.avatar {
+  border-radius: 50%;
+  box-shadow: var(--avatar-ring);
+}
+
+.avatar--blank,
+.player--active .avatar--blank {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* ---------- Đồng hồ ---------- */
+.clock {
+  min-width: 0;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: var(--clock-radius);
+  font-family: var(--clock-font);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--clock-weight);
+  font-size: var(--clock-size);
+  line-height: 1;
+  letter-spacing: var(--clock-tracking);
+  gap: 9px;
+  opacity: var(--clock-idle);
+  transition:
+    opacity 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.clock--w,
+.clock--w:is(.clock--turn, .clock--running) {
+  background: var(--clock-w);
+  color: var(--clock-w-ink);
+  box-shadow: var(--clock-w-edge);
+}
+
+.clock--b,
+.clock--b:is(.clock--turn, .clock--running) {
+  background: var(--clock-b);
+  color: var(--clock-b-ink);
+  box-shadow: var(--clock-b-edge);
+}
+
+.clock:is(.clock--turn, .clock--running) {
+  opacity: 1;
+}
+
+.clock--w:is(.clock--turn, .clock--running) {
+  box-shadow: var(--clock-w-edge), var(--signal-ring);
+}
+
+.clock--b:is(.clock--turn, .clock--running) {
+  box-shadow: var(--clock-b-edge), var(--signal-ring);
+}
+
+.clock__icon {
+  display: none;
+}
+
+.clock--running::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+.clock--w.clock--low {
+  color: #b3261e;
+}
+
+.clock--b.clock--low {
+  color: #ff8a80;
+}
+
+.clock--running.clock--low,
+.clock--out {
+  opacity: 1;
+  background: var(--danger-strong);
+  color: #fff;
+  box-shadow: var(--danger-edge);
+}
+
+.clock--running.clock--low::before {
+  background: #fff;
+}
+
+@media (max-width: 599px) {
+  .clock {
+    padding: 6px 12px;
+    font-size: calc(var(--clock-size) * 0.86);
+  }
+}
+
+/* ---------- Bàn cờ trong khay ---------- */
+.board-frame {
+  padding: var(--tray);
+  border-radius: var(--tray-radius);
+  background: var(--tray-bg);
+  box-shadow: var(--tray-edge), var(--tray-shadow);
+}
+
+.board-frame cg-board {
+  border-radius: var(--board-radius);
+}
+
+.board-frame--review {
+  outline-color: var(--led);
+}
+
+.promotion {
+  border-radius: var(--tray-radius);
+}
+
+/* Điện thoại: bàn cờ tràn sát hai mép màn hình */
+@media (max-width: 599px) {
+  :root {
+    --tray: 6px;
+  }
+
+  .board-frame {
+    width: calc(100% + max(16px, env(safe-area-inset-left, 0px)) + max(16px, env(safe-area-inset-right, 0px)));
+    max-width: none;
+    margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+    margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+    border-radius: 0;
+  }
+
+  .promotion {
+    border-radius: 0;
+  }
+}
+
+/* ---------- Cột nước đi ---------- */
+.moves__move:hover,
+.strip__move:hover {
+  background: var(--move-hover);
+}
+
+.moves__move--on,
+.moves__move--on:hover,
+.strip__move--on,
+.strip__move--on:hover {
+  background: var(--move-on);
+  color: var(--move-on-ink);
+}
+
+.moves__move--on .moves__time,
+.strip__move--on .strip__time {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.moves__san,
+.strip__san {
+  font-weight: 600;
+}
+
+/* ---------- Chat, phòng chờ ---------- */
+.chat__text {
+  background: var(--surface-2);
+}
+
+.chat__send {
+  background: var(--primary);
+  box-shadow: var(--primary-edge);
+  color: var(--primary-ink);
+}
+
+.waiting__dot {
+  background: var(--led);
+}
+
+.demo-note {
+  border-color: var(--line);
+  background: var(--surface-2);
+}

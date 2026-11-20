@@ -1,0 +1,99 @@
+/* 7. Bê tông: thô và thẳng. Xám bê tông, viền đen dày, bóng đổ cứng không mờ, cam công trường, chữ đen đậm in hoa. */
+:root[data-skin='be-tong'] {
+  --bg: #dcdcd7;
+  --surface: #f2f2ee;
+  --surface-2: #e6e6e1;
+  --surface-3: #d0d0ca;
+  --ink: #0d0d0d;
+  --muted: #55554f;
+  --line: #0d0d0d;
+  --accent: #ff5a1f;
+  --accent-ink: #0d0d0d;
+  --accent-soft: #ffd9c9;
+  --led: #ff5a1f;
+  --danger: #d0021b;
+  --danger-strong: #d0021b;
+  --scrim: rgb(13 13 13 / 0.45);
+  --shadow: 6px 6px 0 #0d0d0d;
+  --font-display: 'Archivo', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: light;
+
+  --page-bg:
+    radial-gradient(rgb(0 0 0 / 0.07) 1px, transparent 1.6px) 0 0 / 6px 6px,
+    radial-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1.6px) 3px 3px / 7px 7px, #dcdcd7;
+  --panel: #f2f2ee;
+  --panel-edge: 0 0 0 2px #0d0d0d, 6px 6px 0 #0d0d0d;
+  --panel-radius: 0;
+  --btn: #f2f2ee;
+  --btn-hover: #ffffff;
+  --btn-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --btn-radius: 0;
+  --btn-font: var(--font-display);
+  --btn-weight: 800;
+  --btn-transform: uppercase;
+  --btn-tracking: 0.02em;
+  --btn-press: translate(3px, 3px);
+  --primary: #ff5a1f;
+  --primary-hover: #ff7340;
+  --primary-ink: #0d0d0d;
+  --primary-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --chip: #f2f2ee;
+  --chip-hover: #ffffff;
+  --chip-edge: 0 0 0 2px #0d0d0d;
+  --chip-radius: 0;
+  --pick-on: #ffffff;
+  --pick-on-edge: 0 0 0 2px #0d0d0d, 4px 4px 0 #ff5a1f;
+  --well: #ffffff;
+  --well-edge: inset 0 0 0 2px #0d0d0d;
+  --field-radius: 0;
+  --signal-ring: 0 0 0 3px #ff5a1f;
+  --danger-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --sheet-edge: 0 0 0 2px #0d0d0d, 10px 10px 0 #0d0d0d;
+  --backdrop: rgb(13 13 13 / 0.4);
+  --tray: 10px;
+  --tray-bg: #0d0d0d;
+  --tray-edge: none;
+  --tray-radius: 0;
+  --tray-shadow: 10px 10px 0 #ff5a1f;
+  --board-radius: 0;
+  --clock-font: var(--font-mono);
+  --clock-weight: 600;
+  --clock-radius: 0;
+  --clock-idle: 0.65;
+  --clock-w: #ffffff;
+  --clock-w-ink: #0d0d0d;
+  --clock-w-edge: 0 0 0 2px #0d0d0d;
+  --clock-b: #0d0d0d;
+  --clock-b-ink: #ffffff;
+  --clock-b-edge: 0 0 0 2px #0d0d0d;
+  --heading-weight: 900;
+  --heading-transform: uppercase;
+  --heading-tracking: -0.01em;
+  --brand-weight: 900;
+  --brand-tracking: 0.02em;
+  --brand-mark: linear-gradient(135deg, #0d0d0d 0 50%, #ff5a1f 50%);
+  --brand-mark-radius: 0;
+  --move-hover: #e6e6e1;
+  --move-on: #0d0d0d;
+  --move-on-ink: #ffffff;
+  --avatar-ring: 0 0 0 2px #0d0d0d;
+  --tip: #0d0d0d;
+  --tip-ink: #ffffff;
+  --crown: #ff5a1f;
+}
+
+[data-skin='be-tong'] .brand {
+  font-size: 1.35rem;
+  font-stretch: 112%;
+}
+
+[data-skin='be-tong'] .avatar {
+  border-radius: 0;
+}
+
+[data-skin='be-tong'] .scorecard__num {
+  font-family: var(--font-display);
+  font-weight: 900;
+}

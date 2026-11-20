@@ -1,7 +1,5 @@
 /* Bố cục: bàn cờ là nhân vật chính bên trái, cột điều khiển hẹp bên phải; điện thoại thì xếp dọc.
-   Kiểu Titan: như đồ công nghệ cao cấp, vỏ titan nhám, viền vát kim loại, đồng hồ số mảnh, đèn xanh băng báo tới lượt.
-   Luôn tối (nền xám không tranh màu với bàn cờ và quân 3D). Phần chất liệu (vân xước, viền vát, khay kim loại quanh
-   bàn cờ) nằm ở titan.css. */
+   Màu dưới đây là màu mặc định; mỗi kiểu giao diện (src/skins/) đặt lại màu, chữ và chất liệu (xem skins/material.css). */
 :root {
   --bg: #0d0e10;
   --surface: #17181b;
@@ -23,9 +21,9 @@
   --board-light: #f0d9b5;
   --board-dark: #b58863;
 
-  --font-display: 'Geist', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Geist', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
+  --font-display: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
 
   color-scheme: dark;
 }
@@ -84,6 +82,20 @@ body {
   letter-spacing: 0.34em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.brand__link {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.brand__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 
 .brand__mark {

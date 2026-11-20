@@ -7,9 +7,35 @@
 
 .page-foot {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
   padding-top: 4px;
+}
+
+.page-foot__tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Dòng "Made by Thành Tài": nhỏ, mờ, không tranh chỗ với bàn cờ */
+.credit {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.credit a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.credit a:hover {
+  border-bottom-color: var(--ink);
 }
 
 @media (min-width: 600px) {
@@ -17,7 +43,7 @@
     display: grid;
   }
 
-  .page-foot {
+  .page-foot__tools {
     display: none;
   }
 }

@@ -6,6 +6,8 @@ import type { Color, PieceSymbol, Square } from 'chess.js'
 import type { Config } from '@lichess-org/chessground/config'
 import type { Key } from '@lichess-org/chessground/types'
 import { ActionButton } from '../components/ActionButton'
+import { EndFx } from '../components/EndFx'
+import { endFxEvent, type EndFxEvent } from '../components/endFxEvent'
 import { Board } from '../components/Board'
 import { BoardTools } from '../components/BoardTools'
 import { MoveList, MoveStrip } from '../components/MoveList'
@@ -194,6 +196,20 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   // ---------- Âm thanh ----------
   // Kêu theo nước mới xuất hiện trên bàn (của mình lẫn đối thủ). Mở trang giữa chừng thì không kêu bù.
   const heard = useRef<{ number: number; ply: number; over: boolean } | null>(null)
+
+  // Hiệu ứng hết ván, bật đúng lúc ván vừa xong (mở trang khi ván đã xong thì không bật): người thắng (và người đứng
+  // xem) thấy mừng thắng, người thua thấy vua mình đổ. Tính ngay lúc vẽ khi thấy ván đổi trạng thái.
+  const [endFx, setEndFx] = useState<EndFxEvent | null>(null)
+  const [endSeen, setEndSeen] = useState({ number: game.number, over })
+  if (endSeen.number !== game.number || endSeen.over !== over) {
+    setEndSeen({ number: game.number, over })
+    if (endSeen.number === game.number && over && status.kind !== 'aborted') {
+      const winner = 'winner' in status ? status.winner : null
+      if (!winner) setEndFx(endFxEvent('draw', null))
+      else if (me !== null && winner !== me) setEndFx(endFxEvent('lose', me))
+      else setEndFx(endFxEvent('win', winner))
+    }
+  }
   const decisive = 'winner' in status
   const aborted = status.kind === 'aborted'
   useEffect(() => {
@@ -202,7 +218,9 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
     if (!before || before.number !== game.number) return
     const moved = played.length === before.ply + 1
     if (moved) playMove(describeMove(replay(played.slice(0, -1)), played.at(-1)!))
-    if (!before.over && over && !aborted) playSound(decisive ? 'end' : 'draw', moved ? END_DELAY : 0)
+    if (!before.over && over && !aborted) {
+      playSound(decisive ? 'end' : 'draw', moved ? END_DELAY : 0)
+    }
   }, [played, game.number, over, decisive, aborted])
 
   // Tới lượt mình thì tên tab báo, để chuyển sang app khác (gửi link, nhắn tin) quay lại là thấy.
@@ -418,6 +436,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
         <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
           <Board config={config} onMove={handleMove} onPremove={handlePremove} onPremoveCancel={premoves.length > 0 ? cancelPremoves : undefined} />
           {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={() => setPromotion(null)} />}
+          <EndFx event={endFx} />
         </div>
         <div className="bar-anchor">
           <PlayerBar

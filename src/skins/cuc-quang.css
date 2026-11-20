@@ -1,0 +1,96 @@
+/* 8. Cực quang: bầu trời đêm có dải cực quang xanh, tím, hồng; các khối là kính mờ trong suốt nhìn thấy màu phía sau. */
+:root[data-skin='cuc-quang'] {
+  --bg: #0b1026;
+  --surface: rgb(255 255 255 / 0.06);
+  --surface-2: rgb(255 255 255 / 0.1);
+  --surface-3: rgb(255 255 255 / 0.16);
+  --ink: #f4f7ff;
+  --muted: #aab4d8;
+  --line: rgb(255 255 255 / 0.14);
+  --accent: #6ef3c5;
+  --accent-ink: #04221a;
+  --accent-soft: rgb(110 243 197 / 0.16);
+  --led: #6ef3c5;
+  --danger: #ff8fa3;
+  --danger-strong: #f43f5e;
+  --shadow: 0 20px 50px rgb(0 0 0 / 0.3);
+  --font-display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+
+  --page-bg:
+    radial-gradient(55% 45% at 12% 8%, rgb(56 189 248 / 0.38), transparent 70%),
+    radial-gradient(50% 45% at 88% 16%, rgb(168 85 247 / 0.38), transparent 70%),
+    radial-gradient(55% 40% at 70% 92%, rgb(244 114 182 / 0.22), transparent 70%),
+    radial-gradient(60% 50% at 25% 100%, rgb(52 211 153 / 0.3), transparent 70%), #0b1026;
+  --panel: rgb(255 255 255 / 0.07);
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 0 0 1px rgb(255 255 255 / 0.12), 0 20px 50px rgb(0 0 0 / 0.22);
+  --panel-radius: 22px;
+  --btn: rgb(255 255 255 / 0.1);
+  --btn-hover: rgb(255 255 255 / 0.17);
+  --btn-edge: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 0 0 1px rgb(255 255 255 / 0.12);
+  --btn-radius: 999px;
+  --btn-weight: 600;
+  --primary: linear-gradient(120deg, #6ef3c5, #7cc4ff 55%, #c49bff);
+  --primary-hover: linear-gradient(120deg, #8af7d3, #94d0ff 55%, #d1b0ff);
+  --primary-ink: #061226;
+  --primary-edge: 0 8px 26px rgb(124 196 255 / 0.35);
+  --chip: rgb(255 255 255 / 0.07);
+  --chip-hover: rgb(255 255 255 / 0.13);
+  --chip-edge: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0 0 1px rgb(255 255 255 / 0.1);
+  --chip-radius: 14px;
+  --pick-on: rgb(255 255 255 / 0.16);
+  --pick-on-edge: 0 0 0 1.5px #6ef3c5;
+  --well: rgb(0 0 0 / 0.25);
+  --well-edge: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  --field-radius: 14px;
+  --signal-ring: 0 0 0 2px #6ef3c5, 0 0 24px rgb(110 243 197 / 0.4);
+  --sheet-edge: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 0 0 1px rgb(255 255 255 / 0.14), 0 30px 80px rgb(0 0 0 / 0.5);
+  --backdrop: rgb(5 8 20 / 0.45);
+  --tray: 10px;
+  --tray-bg: rgb(255 255 255 / 0.08);
+  --tray-edge: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 0 0 1px rgb(255 255 255 / 0.14);
+  --tray-radius: 24px;
+  --tray-shadow: 0 30px 70px rgb(0 0 0 / 0.35);
+  --board-radius: 14px;
+  --clock-weight: 600;
+  --clock-radius: 14px;
+  --clock-w: rgb(255 255 255 / 0.92);
+  --clock-w-ink: #0b1026;
+  --clock-w-edge: 0 0 0 1px rgb(255 255 255 / 0.4);
+  --clock-b: rgb(4 8 24 / 0.65);
+  --clock-b-ink: #f4f7ff;
+  --clock-b-edge: 0 0 0 1px rgb(255 255 255 / 0.16);
+  --heading-weight: 600;
+  --heading-tracking: -0.01em;
+  --brand-weight: 600;
+  --brand-tracking: 0.16em;
+  --brand-mark: radial-gradient(circle, #0b1026 0 40%, transparent 42%), conic-gradient(#6ef3c5, #7cc4ff, #c49bff, #ff9ad5, #6ef3c5);
+  --move-hover: rgb(255 255 255 / 0.08);
+  --move-on: rgb(110 243 197 / 0.2);
+  --move-on-ink: #f4f7ff;
+  --avatar-ring: 0 0 0 2px rgb(11 16 38 / 0.8), 0 0 0 3.5px rgb(255 255 255 / 0.5);
+  --tip: #f4f7ff;
+  --tip-ink: #0b1026;
+}
+
+/* Kính mờ: làm nhòe màu cực quang phía sau các khối */
+[data-skin='cuc-quang'] :is(.card, .tc, .moves, .result, .scorecard, .chat, .offer, .strip, .board-frame, .mode, .icon-btn, .act, .board-tool) {
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+[data-skin='cuc-quang'] :is(.sound-sheet, .theme-panel) {
+  background: rgb(16 22 52 / 0.82);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+[data-skin='cuc-quang'] .board-frame cg-board {
+  overflow: hidden;
+}
+
+[data-skin='cuc-quang'] .brand {
+  font-size: 0.9rem;
+}

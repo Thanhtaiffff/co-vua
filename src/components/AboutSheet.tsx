@@ -90,7 +90,7 @@ export function AboutSheet() {
         </dl>
         <p className="about__credits">
           Luật cờ: chess.js · Bàn cờ: chessground của lichess · Quân cờ: bộ cburnett của Colin M.L. Burnett (GPL), quân 2D chất liệu dựng từ bộ
-          này; quân 3D, bàn chủ đề tự dựng · Tiếng thu thật: Kenney (CC0) · Chữ: Geist
+          này; quân 3D, bàn chủ đề tự dựng · Tiếng thu thật: Kenney (CC0) · Chữ: Google Fonts
         </p>
       </div>
     </dialog>

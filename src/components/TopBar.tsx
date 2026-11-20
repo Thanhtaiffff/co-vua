@@ -82,9 +82,20 @@ export function TopBar({ mode }: Props) {
 
   return (
     <header className="topbar">
+      {/* Bấm tên web là về trang đầu (chơi chung một máy) */}
       <h1 className="brand">
-        <span className="brand__mark" aria-hidden="true" />
-        <span className="brand__word">Cờ vua</span>
+        <a
+          className="brand__link"
+          href="/"
+          aria-label="Cờ vua, về trang đầu"
+          onClick={(e) => {
+            e.preventDefault()
+            navigate('/')
+          }}
+        >
+          <span className="brand__mark" aria-hidden="true" />
+          <span className="brand__word">Cờ vua</span>
+        </a>
       </h1>
       {/* Máy tính: công tắc hai nấc, nấc đang mở sáng lên. Điện thoại hẹp: chỉ còn nút chuyển sang chế độ kia. */}
       <nav className="mode" aria-label="Chế độ chơi">

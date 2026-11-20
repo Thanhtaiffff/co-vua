@@ -1,0 +1,102 @@
+/* 5. Biên bản: tờ ghi biên bản ván đấu ở giải cờ. Giấy kẻ ô, mực bút máy xanh, lề đỏ, ô nhập là dòng kẻ để điền. */
+:root[data-skin='bien-ban'] {
+  --bg: #fbfcff;
+  --surface: #ffffff;
+  --surface-2: #f3f6fd;
+  --surface-3: #e6ecfa;
+  --ink: #13235a;
+  --muted: #5d6c96;
+  --line: #cfd8ef;
+  --accent: #1d3fa8;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6ecfa;
+  --led: #1d3fa8;
+  --danger: #d6453d;
+  --danger-strong: #d6453d;
+  --scrim: rgb(19 35 90 / 0.3);
+  --shadow: 3px 3px 0 rgb(29 63 168 / 0.12);
+  --font-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-body: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: light;
+
+  --page-bg:
+    linear-gradient(rgb(40 80 200 / 0.08) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgb(40 80 200 / 0.08) 1px, transparent 1px) 0 0 / 24px 24px, #fbfcff;
+  --panel: #ffffff;
+  --panel-edge: 0 0 0 1px #9fb0dc, 3px 3px 0 rgb(29 63 168 / 0.1);
+  --panel-radius: 2px;
+  --btn: #ffffff;
+  --btn-hover: #f3f6fd;
+  --btn-edge: 0 0 0 1px #9fb0dc;
+  --btn-radius: 2px;
+  --btn-font: var(--font-mono);
+  --btn-weight: 600;
+  --btn-transform: uppercase;
+  --btn-tracking: 0.04em;
+  --primary: #1d3fa8;
+  --primary-hover: #16338c;
+  --primary-ink: #ffffff;
+  --chip: #ffffff;
+  --chip-hover: #f3f6fd;
+  --chip-edge: 0 0 0 1px #b9c5e6;
+  --chip-radius: 2px;
+  --pick-on: #e6ecfa;
+  --pick-on-edge: 0 0 0 2px #1d3fa8;
+  --well: transparent;
+  --well-edge: inset 0 -1.5px 0 #1d3fa8;
+  --field-radius: 0;
+  --signal-ring: 0 0 0 2px #1d3fa8;
+  --sheet-edge: 0 0 0 1px #9fb0dc, 6px 6px 0 rgb(29 63 168 / 0.12);
+  --backdrop: rgb(19 35 90 / 0.25);
+  --tray: 8px;
+  --tray-bg: #ffffff;
+  --tray-edge: 0 0 0 1px #9fb0dc;
+  --tray-radius: 2px;
+  --tray-shadow: 5px 5px 0 rgb(29 63 168 / 0.12);
+  --board-radius: 0;
+  --clock-font: var(--font-mono);
+  --clock-weight: 500;
+  --clock-size: 1.7rem;
+  --clock-radius: 2px;
+  --clock-w: #ffffff;
+  --clock-w-ink: #13235a;
+  --clock-w-edge: 0 0 0 1px #9fb0dc;
+  --clock-b: #13235a;
+  --clock-b-ink: #ffffff;
+  --clock-b-edge: 0 0 0 1px #13235a;
+  --heading-weight: 600;
+  --heading-transform: uppercase;
+  --heading-tracking: 0.08em;
+  --brand-weight: 600;
+  --brand-tracking: 0.22em;
+  --brand-mark: radial-gradient(circle, transparent 0 44%, #d6453d 46% 60%, transparent 62%);
+  --move-hover: #f3f6fd;
+  --move-on: #e6ecfa;
+  --move-on-ink: #13235a;
+  --avatar-ring: 0 0 0 2px #fbfcff, 0 0 0 3px #9fb0dc;
+  --tip: #13235a;
+  --tip-ink: #ffffff;
+  --crown: #d6453d;
+}
+
+/* Lề đỏ dọc bên trái như vở viết (chỉ màn rộng, điện thoại hẹp thì bỏ) */
+@media (min-width: 900px) {
+  [data-skin='bien-ban'] body::before {
+    content: '';
+    position: fixed;
+    inset: 0 auto 0 calc(max(16px, env(safe-area-inset-left, 0px)) + 18px);
+    width: 2px;
+    background: rgb(214 69 61 / 0.45);
+    pointer-events: none;
+  }
+}
+
+[data-skin='bien-ban'] :is(.card__title, .sound-sheet__title, .theme-panel__title, .result__title) {
+  font-size: 0.95rem;
+}
+
+[data-skin='bien-ban'] .player__name {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
