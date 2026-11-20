@@ -216,7 +216,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar switchTo={{ path: '/online', label: 'Chơi online' }} />
+      <TopBar switchTo={{ path: '/online', label: 'Chơi online', short: 'Online' }} />
 
       <main className="table">
         <section className="board-col">

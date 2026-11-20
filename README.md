@@ -20,6 +20,16 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 - **Chống phá ván**: máy chủ bỏ qua thư rác, thư quá dài, thư gửi quá dày (quá 20 thư liền một lúc rồi 5 thư mỗi giây), nên người có link không làm đơ được ván hay làm đồng hồ bị trừ oan.
 - Tên tab báo "Tới lượt bạn" khi chuyển sang app khác.
 
+### Chơi với máy
+
+- Bấm nút hình **robot** ở đầu trang (máy tính rê chuột vào thì hiện chữ "Chơi với máy"), hay mở thẳng `/may`.
+- Chọn **mức của máy** (1 Mới tập, 2 Dễ, 3 Vừa, 4 Khá, 5 Khó, 6 Cao thủ), **màu quân** (Trắng, Ngẫu nhiên, Đen), bấm **Chơi**. Thời gian gập sẵn ở dòng **Thời gian** (mặc định không tính giờ, như chess.com); mở ra để chọn đồng hồ, đồng hồ của máy cũng chạy.
+- Máy là **Stockfish 18** (bản lite, một luồng) chạy ngay trong trình duyệt bằng WebAssembly, không cần mạng sau khi tải xong (khoảng 7 MB, trình duyệt nhớ cho lần sau; máy bắt đầu tải ngay khi mở trang nên chọn xong là chơi được). Không gửi gì lên máy chủ.
+- Mức được "bó tay" bằng ba nút vặn trong `src/bot/levels.ts`: trình độ (Skill Level 0–20) của Stockfish, số nước máy được nhìn trước (độ sâu) và thời gian nghĩ, và ở mức 1–2 thì có tỉ lệ máy đi bừa một nước hợp lệ (35% và 10%). Máy nghĩ ít nhất khoảng nửa giây đến một giây cho tự nhiên.
+- **Đi lại**: lùi nước mình và nước máy vừa đáp (máy đang nghĩ thì chỉ lùi nước mình). **Đầu hàng** (bấm hai lần). **Ván mới** (đang chơi dở thì bấm hai lần) về bảng chọn. Hết ván có **Chơi lại** (cùng mức, cùng màu) và **Đổi mức**.
+- Ván đang chơi lưu trong máy: tải lại trang vẫn còn.
+- Phần "bộ não" (`src/engine/stockfish.ts`) dùng chung được cho việc khác (phân tích ván): mỗi `new Engine()` là một máy riêng chạy trong Web Worker, `analyse(fen, { depth, movetime, multipv, skill, moves, signal })` trả nước tốt nhất và điểm theo góc nhìn Trắng.
+
 ### Trong ván (cả chơi một máy lẫn online)
 
 - Thanh người chơi như chess.com: **ảnh đại diện** (chữ cái đầu của tên trên nền màu riêng của tên đó, hai người không bao giờ trùng màu; chưa nhập tên thì là hình con tốt), **tên đã nhập** (chơi một máy: ô "Tên người chơi" trước ván; online: tên lúc tạo phòng, vào phòng), **quân đã ăn được** của đối thủ (quân cùng loại xếp chồng) và số điểm quân hơn (+3…). Thanh không ghi "Trắng", "Đen": chưa nhập tên thì chơi một máy không hiện chữ, online thì mình là "Bạn", người kia là "Đối thủ".
@@ -161,6 +171,7 @@ Code dự án phát hành theo **GPL-3.0-or-later** (xem file `LICENSE`), vì b�
 
 - [chess.js](https://github.com/jhlywa/chess.js): luật cờ, giấy phép BSD-2-Clause.
 - [chessground](https://github.com/lichess-org/chessground): bàn cờ của lichess, giấy phép GPL-3.0-or-later.
+- [Stockfish](https://stockfishchess.org) 18 qua [stockfish.js](https://github.com/nmrugg/stockfish.js) (Nathan Rugg, Chess.com): máy cờ cho chơi với máy, giấy phép GPL-3.0. File máy nằm ở `src/engine/vendor` (gói npm `stockfish` 18.0.8, bản lite một luồng) kèm `COPYING.txt`.
 - Bộ quân cburnett: Colin M.L. Burnett, giấy phép GPLv2+. Quân 2D theo chất liệu dựng từ hình bộ này nên cũng theo giấy phép đó.
 - Quân 3D và bàn cờ của các chủ đề do code của dự án tự dựng (`tools/themes`, dùng [three.js](https://threejs.org), giấy phép MIT, chỉ chạy lúc dựng ảnh, không nằm trong web).
 - Tiếng thu thật: [Kenney](https://kenney.nl), bộ Impact Sounds, Casino Audio và Interface Sounds, giấy phép CC0 (tặng cho mọi người, ai dùng cũng được). Dùng cho bộ Gỗ, các bộ Kim loại, Thủy tinh, và tiếng nền xi măng trong bộ Bàn đá. Tiếng đá gõ đá, các bộ Trống, Bass, 8-bit và Bong bóng do code của dự án tự dựng.
