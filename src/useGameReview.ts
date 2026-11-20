@@ -12,8 +12,9 @@ import { loadSaved, save } from './storage'
 // máy tính, ván 33 nửa nước mất 3,5 giây ở độ sâu 14, 10 giây ở 16, 27 giây ở 18 (một máy cờ; hai máy song song thì độ sâu
 // 16 còn 5 giây). Điện thoại chậm hơn vài lần.
 export const REVIEW_DEPTH = 16
-// Giới hạn thời gian cho một thế cờ, để điện thoại yếu không phải chờ quá lâu ở thế cờ rắc rối.
-const MAX_MS = 1000
+// Giới hạn số thế cờ máy xét cho mỗi thế cờ (thường chỉ cần vài trăm nghìn), để thế cờ rắc rối không làm chờ quá lâu.
+// Giới hạn theo số thế cờ chứ không theo giờ, để máy nhanh hay chậm cũng ra cùng một kết quả.
+const MAX_NODES = 1_500_000
 
 // Máy có từ 4 nhân trở lên thì cho hai máy cờ chạy song song (nhanh gấp đôi), máy yếu hơn thì một.
 function engineCount(): number {
@@ -84,19 +85,19 @@ export function useGameReview(moves: PlayedMove[] | null): GameReviewApi {
     }
 
     const evals: (PositionEval | undefined)[] = new Array(total)
-    let next = 0
     let done = 0
-    const engines = Array.from({ length: engineCount() }, () => new Engine())
+    const count = engineCount()
+    const engines = Array.from({ length: count }, () => new Engine())
 
-    // Mỗi máy lần lượt nhận thế cờ kế tiếp chưa ai xem, tới khi hết.
-    async function work(engine: Engine) {
+    // Mỗi máy xem một đoạn ván liền nhau (máy 1 nửa đầu, máy 2 nửa sau). Chia cố định như vậy, cộng với giới hạn theo độ
+    // sâu và số thế cờ (không theo giờ), thì phân tích lại cùng một ván luôn ra đúng kết quả cũ.
+    async function work(engine: Engine, from: number, to: number) {
       await engine.newGame()
-      while (!signal.aborted && next < total) {
-        const i = next++
+      for (let i = from; i < to && !signal.aborted; i++) {
         const final = finals[i]
         if (final) evals[i] = { score: final, best: null }
         else {
-          const result = await engine.analyse(fens[i], { depth: REVIEW_DEPTH, movetime: MAX_MS, signal })
+          const result = await engine.analyse(fens[i], { depth: REVIEW_DEPTH, nodes: MAX_NODES, signal })
           if (signal.aborted) return
           evals[i] = { score: result.lines[0]?.score ?? { cp: 0 }, best: result.bestmove }
         }
@@ -107,7 +108,7 @@ export function useGameReview(moves: PlayedMove[] | null): GameReviewApi {
 
     void (async () => {
       try {
-        await Promise.all(engines.map(work))
+        await Promise.all(engines.map((engine, k) => work(engine, Math.floor((k * total) / count), Math.floor(((k + 1) * total) / count))))
         if (signal.aborted) return
         const all = evals as PositionEval[]
         last = { key, evals: all }
