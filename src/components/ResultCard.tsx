@@ -1,7 +1,9 @@
-// Thẻ kết quả khi hết ván (thay cho ô "1–0" trước đây): ai thắng và vì sao, nút xem lại từng nước, nút mở ván trên
-// lichess để máy chấm xem mình đi hay, đi dở chỗ nào, và "Thống kê ván" (đóng sẵn, ai cần thì mở).
+// Thẻ kết quả khi hết ván (thay cho ô "1–0" trước đây): ai thắng và vì sao, nút xem lại từng nước, nút "Phân tích ván"
+// để máy chấm xem mình đi hay, đi dở chỗ nào (nút nhỏ bên cạnh mở ván trên lichess), và "Thống kê ván" (đóng sẵn).
 import type { Chess, Color } from 'chess.js'
 import { analysisUrl, winnerOf, type GameResult } from '../game/rules'
+import type { GameReviewApi } from '../useGameReview'
+import { GameReviewPanel } from './GameReview'
 import { GameStats } from './GameStats'
 import { Piece } from './Piece'
 
@@ -16,7 +18,21 @@ type Props = {
   orientation: 'white' | 'black'
   shown: number // bàn cờ đang hiện thế cờ sau nước thứ mấy
   onGo: (ply: number) => void // cho bàn cờ hiện thế cờ sau nước `ply` (0 là đầu ván)
+  analysis?: GameReviewApi // máy phân tích ván (không có thì chỉ có nút mở trên lichess)
 }
+
+const ICON_ANALYSE = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 20h18M5 16l4-5 4 3 6-8" />
+    <circle cx="19" cy="6" r="1.2" fill="currentColor" />
+  </svg>
+)
+
+const ICON_EXTERNAL = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </svg>
+)
 
 const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
 
@@ -47,7 +63,7 @@ function reason(result: GameResult, name: (color: Color) => string): string {
   }
 }
 
-export function ResultCard({ result, name, playerName = name, chess, sans, times, clocks, orientation, shown, onGo }: Props) {
+export function ResultCard({ result, name, playerName = name, chess, sans, times, clocks, orientation, shown, onGo, analysis }: Props) {
   const winner = winnerOf(result)
   const title = winner ? `${name(winner)} thắng` : result.kind === 'aborted' ? 'Ván đã huỷ' : 'Hòa'
 
@@ -78,10 +94,24 @@ export function ResultCard({ result, name, playerName = name, chess, sans, times
             <button type="button" className="btn" onClick={() => onGo(0)}>
               Xem lại từng nước
             </button>
-            <a className="btn" href={analysisUrl(sans, orientation)} target="_blank" rel="noopener noreferrer">
-              Phân tích trên lichess ↗
+            {analysis?.state.status === 'idle' && (
+              <button type="button" className="btn btn--primary" onClick={analysis.start}>
+                {ICON_ANALYSE}
+                Phân tích ván
+              </button>
+            )}
+            <a
+              className={analysis ? 'btn result__lichess' : 'btn'}
+              href={analysisUrl(sans, orientation)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Mở ván trên lichess"
+              title="Mở ván trên lichess"
+            >
+              {analysis ? ICON_EXTERNAL : 'Phân tích trên lichess ↗'}
             </a>
           </div>
+          {analysis && <GameReviewPanel api={analysis} sans={sans} name={playerName} shown={shown} onGo={onGo} />}
           <GameStats chess={chess} sans={sans} times={times} clocks={clocks} name={playerName} shown={shown} onGo={onGo} />
         </>
       )}
