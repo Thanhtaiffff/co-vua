@@ -29,6 +29,8 @@ import {
 import { END_DELAY, playMove, playSound } from './sound'
 import { restoreNames, type Names } from './names'
 import { loadSaved, save } from './storage'
+import { moveMarks, reviewShapes } from './reviewView'
+import { useGameReview } from './useGameReview'
 import { useNow } from './useNow'
 import { showBoard, useReview } from './useReview'
 
@@ -79,6 +81,10 @@ export default function App() {
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
   const captured = capturedPieces(shownChess)
   const material = materialDiff(shownChess)
+  // Máy phân tích ván: chỉ mở khi ván đã xong.
+  const analysis = useGameReview(over ? moves : null)
+  const reviewed = analysis.state.status === 'done' ? analysis.state.review : null
+  const marks = moveMarks(reviewed)
 
   useEffect(() => save('moves', moves), [moves])
   useEffect(() => save('clock', clock), [clock])
@@ -133,8 +139,9 @@ export default function App() {
         color: locked ? undefined : SIDE[shownChess.turn()],
         dests: locked ? new Map() : legalDests(shownChess),
       },
+      drawable: { autoShapes: reviewShapes(reviewed, review.shown) },
     }
-  }, [shownChess, boardSide, over, picking, review.reviewing])
+  }, [shownChess, boardSide, over, picking, review.reviewing, review.shown, reviewed])
 
   // Đồng hồ hiện trên thanh người chơi: bên đang tới lượt bị trừ dần theo giờ thật.
   function clockFace(color: Color): ClockFace | null {
@@ -245,7 +252,7 @@ export default function App() {
             clock={clockFace(bottom)}
           />
           <div className="board-under">
-            <MoveStrip sans={sans} times={times} shown={review.shown} onGo={review.go} />
+            <MoveStrip sans={sans} times={times} shown={review.shown} onGo={review.go} marks={marks} />
             <BoardTools
               onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
               flipDisabled={autoFlip}
@@ -266,6 +273,7 @@ export default function App() {
               orientation={boardSide}
               shown={review.shown}
               onGo={goTo}
+              analysis={analysis}
             />
           ) : (
             <div className={`status${status.kind === 'playing' && status.check ? ' status--check' : ''}`} role="status">
@@ -304,7 +312,7 @@ export default function App() {
             <span>Tự xoay bàn theo lượt (hai người chung một điện thoại)</span>
           </label>
 
-          <MoveList sans={sans} times={times} shown={review.shown} onGo={review.go} />
+          <MoveList sans={sans} times={times} shown={review.shown} onGo={review.go} marks={marks} />
 
           <p className="credits">
             Luật cờ: chess.js · Bàn cờ: chessground của lichess · Quân cờ: bộ cburnett của Colin M.L. Burnett (GPL), quân 2D chất liệu dựng từ

@@ -1,0 +1,267 @@
+/* ---------- Phân tích ván (trong thẻ kết quả) ---------- */
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ký hiệu loại nước: vòng tròn màu có ★ ! ✓ ?! ? ?? */
+.glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 1.35em;
+  height: 1.35em;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.glyph--wide {
+  font-size: 0.66rem;
+}
+
+/* Đang phân tích: thanh tiến độ mảnh + nút dừng */
+.review--running {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.review__progress {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent) var(--p, 0%), var(--surface-2) var(--p, 0%));
+  transition: background 200ms linear;
+}
+
+.review__progress-text {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.review__stop {
+  width: 30px;
+  height: 30px;
+}
+
+.review--error {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Lời nhận xét nước đang xem */
+.review__note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 1.6em;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.review__note .glyph {
+  font-size: 0.9rem;
+}
+
+.review__note .glyph--wide {
+  font-size: 0.74rem;
+}
+
+.review__note--start {
+  color: var(--muted);
+}
+
+.review__move {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.review__kind {
+  font-weight: 800;
+}
+
+.review__score {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.review__best {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Biểu đồ thế trận: luôn trắng/xám đậm như quân cờ, không đổi theo chế độ sáng/tối */
+.review__graph {
+  display: block;
+  width: 100%;
+  height: 72px;
+  border-radius: 8px;
+  cursor: pointer;
+  touch-action: none;
+  border: 1px solid var(--line);
+}
+
+.review__graph-black {
+  fill: #3a3d3f;
+}
+
+.review__graph-white {
+  fill: #f1f2ee;
+}
+
+.review__graph-mid {
+  stroke: #8d9291;
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 3 3;
+}
+
+.review__graph-now {
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.review__graph-dot {
+  stroke: #fff;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Bảng hai bên: số của Trắng bên trái, loại nước ở giữa, số của Đen bên phải */
+.review__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.review__table th,
+.review__table td {
+  padding: 5px 0;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+}
+
+.review__table tbody tr:last-child th,
+.review__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.review__table tbody th {
+  font-weight: 600;
+  text-align: center;
+}
+
+.review__who {
+  width: 26%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: 800;
+}
+
+.review__who--b {
+  text-align: right;
+}
+
+.review__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review__count--w {
+  text-align: left;
+}
+
+.review__count--b {
+  text-align: right;
+}
+
+.review__accuracy td {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.review__jump {
+  min-width: 32px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.review__count--w .review__jump {
+  margin-left: -6px;
+}
+
+.review__count--b .review__jump {
+  margin-right: -6px;
+}
+
+.review__jump:hover {
+  background: var(--surface-2);
+}
+
+.review__jump:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.review__zero {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+/* Ký hiệu nước dở trong cột nước đi */
+.moves__san .glyph,
+.strip__san .glyph {
+  width: 1.25em;
+  height: 1.25em;
+  margin-left: 4px;
+  vertical-align: 1px;
+  font-size: 0.66rem;
+}
+
+.moves__san .glyph--wide,
+.strip__san .glyph--wide {
+  font-size: 0.56rem;
+}
+
+/* Nút Phân tích ván trong hàng nút của thẻ kết quả */
+.result__actions .btn svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+
+.result__lichess {
+  flex: 0 0 auto !important;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  padding: 0 !important;
+}
+
+.result__lichess svg {
+  margin: 0 !important;
+}
