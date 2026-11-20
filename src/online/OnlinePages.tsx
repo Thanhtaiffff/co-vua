@@ -26,7 +26,7 @@ const COLOR_NAME: Record<Color, string> = { w: 'Trắng', b: 'Đen' }
 function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="app">
-      <TopBar switchTo={{ path: '/', label: 'Chơi một máy' }} />
+      <TopBar switchTo={{ path: '/', label: 'Chơi một máy', short: 'Một máy' }} />
       {children}
       <PageFoot />
     </div>

@@ -12,7 +12,8 @@
 //
 // File máy nằm ở src/engine/vendor (gói npm `stockfish` 18.0.8 của Nathan Rugg và Chess.com, giấy phép GPL-3.0 như web).
 // Bản thường: Vite chép hai file vào /assets với tên có mã băm, nên đường tới file .wasm được gửi kèm sau dấu # cho máy.
-// Bản một file (build:single, build:demo): hai file bị nhúng thẳng vào trang dạng data:, đổi thành blob: rồi mới chạy.
+// Bản một file (build:single, build:demo, build:bot): hai file bị nhúng thẳng vào trang dạng data: (file .wasm nén gzip,
+// xem vite.config.ts), đổi thành blob: rồi mới chạy.
 import engineJsUrl from './vendor/stockfish-18-lite-single.js?url'
 import engineWasmUrl from './vendor/stockfish-18-lite-single.wasm?url'
 import { fenTurn, mergeLine, parseBestmove, parseInfo, type Analysis } from './uci'
@@ -38,7 +39,9 @@ const DEFAULT_DEPTH = 15
 type Job = { onLine: (line: string) => void; finish: (analysis: Analysis) => void }
 
 async function toBlobUrl(dataUrl: string, type: string): Promise<string> {
-  const data = await (await fetch(dataUrl)).arrayBuffer()
+  const response = await fetch(dataUrl)
+  const body = dataUrl.startsWith('data:application/gzip') && response.body ? response.body.pipeThrough(new DecompressionStream('gzip')) : response.body
+  const data = await new Response(body).arrayBuffer()
   return URL.createObjectURL(new Blob([data], { type }))
 }
 

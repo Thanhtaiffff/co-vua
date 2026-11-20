@@ -2,6 +2,7 @@
 // chủ đề, nút chọn bộ tiếng và nút loa. Lựa chọn chủ đề và âm thanh lưu trong máy, trang nào cũng dùng chung.
 // Form góp ý cũng nằm ở đây (một form cho cả trang; nút Góp ý cuối trang trên điện thoại cũng mở form này).
 import { useEffect, useState } from 'react'
+import '../bot/bot.css'
 import { FeedbackButton, FeedbackSheet } from '../feedback/FeedbackForm'
 import { navigate } from '../router'
 import { playSample, playSound, selectSoundSet, setSoundEnabled, setupSound, SOUND_SETS, type SoundSet } from '../sound'
@@ -13,7 +14,22 @@ import { SoundToggle } from './SoundToggle'
 import { ThemePicker } from './ThemePicker'
 
 type Props = {
-  switchTo: { path: string; label: string }
+  switchTo: { path: string; label: string; short: string } // short: chữ ngắn cho điện thoại hẹp
+  botLink?: boolean // hiện nút hình máy (chơi với máy) cạnh nút chuyển chế độ; trang chơi với máy thì tắt
+}
+
+// Hình con robot nhỏ cho nút Chơi với máy.
+function BotIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4.5" y="8" width="15" height="11" rx="3" />
+      <path d="M12 8V4.5M9.5 19v1.5M14.5 19v1.5M2.5 12.5v2M21.5 12.5v2" />
+      <circle cx="12" cy="3.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9.3" cy="12.8" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="14.7" cy="12.8" r="1.25" fill="currentColor" stroke="none" />
+      <path d="M10 16.2h4" />
+    </svg>
+  )
 }
 
 // Máy đã chọn sẵn một bộ tiếng khác Gỗ (từ trước khi có chủ đề) thì giữ bộ đó; còn lại tiếng theo chủ đề.
@@ -23,7 +39,7 @@ function savedSoundMode(): SoundMode {
   return loadSaved<unknown>('soundSet', 'wood') === 'wood' ? 'theme' : 'fixed'
 }
 
-export function TopBar({ switchTo }: Props) {
+export function TopBar({ switchTo, botLink = true }: Props) {
   const theme = useTheme()
   const [soundOn, setSoundOn] = useState<boolean>(() => loadSaved('sound', true))
   const [soundMode, setSoundMode] = useState<SoundMode>(savedSoundMode)
@@ -82,8 +98,25 @@ export function TopBar({ switchTo }: Props) {
           navigate(switchTo.path)
         }}
       >
-        {switchTo.label}
+        <span className="mode-link__long">{switchTo.label}</span>
+        <span className="mode-link__short">{switchTo.short}</span>
       </a>
+      {botLink && (
+        <a
+          className="mode-link bot-link"
+          href="/may"
+          aria-label="Chơi với máy"
+          onClick={(e) => {
+            e.preventDefault()
+            navigate('/may')
+          }}
+        >
+          <BotIcon />
+          <span className="bot-link__label" aria-hidden="true">
+            Chơi với máy
+          </span>
+        </a>
+      )}
       <div className="topbar__tools">
         <FeedbackButton place="top" />
         <ThemePicker onPickPieces={pickPieces} />
