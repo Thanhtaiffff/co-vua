@@ -1,6 +1,6 @@
-/* A. Bê tông kính: tường bê tông trần kiểu nhà Tadao Ando (vân ván khuôn, lỗ ty chia ô đều), các khối là tấm kính
+/* Kiểu giao diện Bê tông kính (Tài chọn 2026-11-21): tường bê tông trần kiểu nhà Tadao Ando (vân ván khuôn, lỗ ty chia ô đều), các khối là tấm kính
    sáng đặt nổi lên. Kính cần thứ phía sau để nhìn xuyên, nên vân, mạch và lỗ ty của bê tông là thứ kính bẻ cong. */
-:root[data-skin='be-tong-kinh'] {
+:root {
   --bg: #b6b2ab;
   --surface: rgb(255 255 255 / 0.4);
   --surface-2: rgb(255 255 255 / 0.5);
@@ -101,16 +101,16 @@
   --crown: #ff5a1f;
 }
 
-[data-skin='be-tong-kinh'] .brand {
+.brand {
   font-size: 1.3rem;
   font-stretch: 110%;
 }
 
-[data-skin='be-tong-kinh'] .brand__mark {
+.brand__mark {
   box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(255 255 255 / 0.5), 0 4px 10px rgb(40 36 30 / 0.25);
 }
 
-[data-skin='be-tong-kinh'] .scorecard__num {
+.scorecard__num {
   font-family: var(--font-display);
   font-weight: 900;
 }

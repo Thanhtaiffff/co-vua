@@ -1,5 +1,5 @@
 /* Bố cục: bàn cờ là nhân vật chính bên trái, cột điều khiển hẹp bên phải; điện thoại thì xếp dọc.
-   Màu dưới đây là màu mặc định; mỗi kiểu giao diện (src/skins/) đặt lại màu, chữ và chất liệu (xem skins/material.css). */
+   Màu dưới đây là màu mặc định; kiểu giao diện Bê tông kính (src/skins/be-tong-kinh.css) đặt lại màu, chữ và chất liệu (xem skins/material.css). */
 :root {
   --bg: #0d0e10;
   --surface: #17181b;
@@ -371,6 +371,65 @@ body {
 @media (hover: hover) {
   [data-tip]:hover::after {
     display: block;
+  }
+}
+
+/* Nút tròn trên đầu trang (máy tính): rê chuột vào thì nút dãn ngang thành viên thuốc, chữ chạy ra ngay trong nút,
+   không có bong bóng bay ra đè lên khối bên dưới. Các nút bên cạnh tự dạt sang nhường chỗ. */
+@media (hover: hover) and (min-width: 600px) {
+  .topbar .icon-btn[data-tip] {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    min-width: 40px;
+    padding-inline: 9.5px;
+    border-radius: 999px;
+    transition:
+      color 120ms ease,
+      background-color 120ms ease,
+      padding 220ms ease;
+  }
+
+  .topbar .icon-btn[data-tip] svg {
+    flex: none;
+  }
+
+  .topbar .icon-btn[data-tip]::after,
+  .topbar__tools > .icon-btn[data-tip]:last-child::after {
+    display: block;
+    position: static;
+    max-width: 0;
+    margin-left: 0;
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    font-size: 0.86rem;
+    opacity: 0;
+    transform: none;
+    translate: none;
+    transition:
+      max-width 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 160ms ease;
+  }
+
+  .topbar .icon-btn[data-tip]:is(:hover, :focus-visible, .tip--show) {
+    padding-inline: 11px 15px;
+  }
+
+  .topbar .icon-btn[data-tip]:is(:hover, :focus-visible, .tip--show)::after {
+    max-width: 16em;
+    margin-left: 8px;
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (min-width: 600px) and (prefers-reduced-motion: reduce) {
+  .topbar .icon-btn[data-tip],
+  .topbar .icon-btn[data-tip]::after {
+    transition: none;
   }
 }
 

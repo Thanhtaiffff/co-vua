@@ -1,7 +1,8 @@
 /* Lớp chất liệu dùng chung cho mọi kiểu giao diện, nạp sau cùng (main.tsx) để phủ lên các file CSS khác.
    Bố cục nằm ở index.css, online.css...; file này chỉ lo "vỏ": nền trang, khối nổi, nút, ô chọn, ô nhập, khay bàn cờ,
-   đồng hồ. Mọi thứ lấy từ biến (token) bên dưới. Mỗi kiểu giao diện (src/skins/<tên>.css) chỉ cần đặt lại các biến này
-   trong :root[data-skin='<tên>'], cộng vài nét riêng nếu cần. Giá trị mặc định ở đây là một kiểu tối trung tính. */
+   đồng hồ. Mọi thứ lấy từ biến (token) bên dưới. Kiểu giao diện đang dùng (be-tong-kinh.css, nạp sau file này) đặt lại các
+   biến trong :root. Muốn đổi kiểu khác về sau thì chỉ cần viết một file biến mới. Giá trị mặc định ở đây là một kiểu tối
+   trung tính. */
 :root {
   --page-bg: var(--bg);
 

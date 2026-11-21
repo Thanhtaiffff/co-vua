@@ -7,23 +7,12 @@ import './index.css'
 import { Root } from './Root.tsx'
 // Lớp chất liệu và các kiểu giao diện nạp sau cùng, sau CSS của mọi trang, để phủ lên.
 import './skins/material.css'
-import './skins/san-dau.css'
-import './skins/cau-lac-bo.css'
-import './skins/giay-trang.css'
-import './skins/via-he.css'
-import './skins/bien-ban.css'
-import './skins/arcade.css'
-import './skins/be-tong.css'
-import './skins/cuc-quang.css'
-import './skins/keo-ngot.css'
-import './skins/neon.css'
 import './skins/glass.css'
 import './skins/be-tong-kinh.css'
-import './skins/kinh-long.css'
-import { applySkin, savedSkin } from './skins/skins'
+import { liquidGlass } from './skins/liquidGlass'
 
-// Đặt kiểu giao diện trước khi vẽ trang để khỏi chớp màu.
-applySkin(savedSkin())
+// Mép kính bẻ cong (chỉ trên Chrome, Edge, Samsung Internet; trình duyệt khác vẫn là kính mờ thường).
+liquidGlass(true)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
