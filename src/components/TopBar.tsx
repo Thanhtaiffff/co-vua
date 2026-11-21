@@ -1,8 +1,9 @@
-// Đầu trang dùng chung cho mọi trang: tên web, công tắc chuyển giữa chơi online và chơi chung một máy, rồi các nút chỉ
+// Đầu trang dùng chung cho mọi trang: tên web, công tắc ba nấc Online | Một máy | Với máy, rồi các nút chỉ
 // có hình (rê chuột vào mới hiện chữ): Mẹo và ghi công, Góp ý, chủ đề, bộ tiếng, loa. Lựa chọn chủ đề và âm thanh lưu
 // trong máy, trang nào cũng dùng chung. Form góp ý và bảng mẹo cũng nằm ở đây (nút cuối trang trên điện thoại cũng mở
 // hai bảng này).
 import { useEffect, useState } from 'react'
+import '../bot/bot.css'
 import { FeedbackButton, FeedbackSheet } from '../feedback/FeedbackForm'
 import { navigate } from '../router'
 import { playSample, playSound, selectSoundSet, setSoundEnabled, setupSound, SOUND_SETS, type SoundSet } from '../sound'
@@ -14,16 +15,31 @@ import { SoundSetPicker, type SoundMode } from './SoundSetPicker'
 import { SoundToggle } from './SoundToggle'
 import { ThemePicker } from './ThemePicker'
 
-type Mode = 'online' | 'local'
+type Mode = 'online' | 'local' | 'bot'
 
 type Props = {
-  mode: Mode // trang đang mở: chơi online hay chơi chung một máy
+  mode: Mode // trang đang mở: chơi online, chơi chung một máy hay chơi với máy
 }
 
 const MODES: { mode: Mode; path: string; label: string }[] = [
   { mode: 'online', path: '/online', label: 'Online' },
   { mode: 'local', path: '/', label: 'Một máy' },
+  { mode: 'bot', path: '/may', label: 'Với máy' },
 ]
+
+// Hình con robot nhỏ cho nấc Với máy (điện thoại chỉ còn hình này, không có chữ).
+function BotIcon() {
+  return (
+    <svg className="mode__bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4.5" y="8" width="15" height="11" rx="3" />
+      <path d="M12 8V4.5M9.5 19v1.5M14.5 19v1.5M2.5 12.5v2M21.5 12.5v2" />
+      <circle cx="12" cy="3.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9.3" cy="12.8" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="14.7" cy="12.8" r="1.25" fill="currentColor" stroke="none" />
+      <path d="M10 16.2h4" />
+    </svg>
+  )
+}
 
 // Máy đã chọn sẵn một bộ tiếng khác Gỗ (từ trước khi có chủ đề) thì giữ bộ đó; còn lại tiếng theo chủ đề.
 function savedSoundMode(): SoundMode {
@@ -97,23 +113,28 @@ export function TopBar({ mode }: Props) {
           <span className="brand__word">Cờ vua</span>
         </a>
       </h1>
-      {/* Máy tính: công tắc hai nấc, nấc đang mở sáng lên. Điện thoại hẹp: chỉ còn nút chuyển sang chế độ kia. */}
+      {/* Máy tính: công tắc ba nấc, nấc đang mở sáng lên. Điện thoại: ẩn nấc đang mở, nấc Với máy chỉ còn hình robot. */}
       <nav className="mode" aria-label="Chế độ chơi">
         {MODES.map((item) => (
           <a
             key={item.mode}
             className="mode__link"
             href={item.path}
+            aria-label={item.mode === 'bot' ? 'Chơi với máy' : undefined}
             aria-current={item.mode === mode ? 'page' : undefined}
             onClick={(e) => {
               e.preventDefault()
               if (item.mode !== mode) navigate(item.path)
             }}
           >
-            <svg className="mode__swap" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 8.5h13.5l-3.2-3.2M19 15.5H5.5l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {item.label}
+            {item.mode === 'bot' ? (
+              <BotIcon />
+            ) : (
+              <svg className="mode__swap" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 8.5h13.5l-3.2-3.2M19 15.5H5.5l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            <span className="mode__label">{item.label}</span>
           </a>
         ))}
       </nav>

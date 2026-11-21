@@ -3,6 +3,8 @@
 // nằm trên cùng. Điện thoại: một dải ngang ngay dưới bàn cờ (vuốt ngang được), để vừa bấm vừa thấy bàn cờ.
 import { useEffect, useRef, type ReactNode } from 'react'
 import { formatThink } from '../game/clock'
+import type { MoveClass } from '../game/review'
+import { Glyph } from './Glyph'
 import { San } from './San'
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
   times: (number | null)[] // thời gian nghĩ của từng nước (ms); null là không biết
   shown: number // bàn cờ đang hiện thế cờ sau nước thứ mấy
   onGo: (ply: number) => void
+  marks?: (MoveClass | null)[] // sau khi máy phân tích: ký hiệu nước dở (?!, ?, ??) cạnh từng nước
 }
 
 const ICONS: Record<'first' | 'prev' | 'next' | 'last', ReactNode> = {
@@ -57,19 +60,22 @@ function useFollow(shown: number, total: number, horizontal: boolean) {
   return box
 }
 
-function Move({ ply, san, time, shown, onGo, prefix }: { ply: number; san: string; time: number | null | undefined; shown: number; onGo: (ply: number) => void; prefix: string }) {
+type MoveProps = { ply: number; san: string; time: number | null | undefined; shown: number; onGo: (ply: number) => void; prefix: string; mark?: MoveClass | null }
+
+function Move({ ply, san, time, shown, onGo, prefix, mark }: MoveProps) {
   const on = ply === shown
   return (
     <button type="button" className={`${prefix}__move${on ? ` ${prefix}__move--on` : ''}`} aria-current={on} onClick={() => onGo(ply)}>
       <span className={`${prefix}__san`}>
         <San san={san} />
+        {mark && <Glyph kind={mark} />}
       </span>
       <span className={`${prefix}__time`}>{time == null ? '' : formatThink(time)}</span>
     </button>
   )
 }
 
-export function MoveList({ sans, times, shown, onGo }: Props) {
+export function MoveList({ sans, times, shown, onGo, marks }: Props) {
   const total = sans.length
   const box = useFollow(shown, total, false)
   const rows: number[] = []
@@ -89,8 +95,8 @@ export function MoveList({ sans, times, shown, onGo }: Props) {
           {rows.map((i) => (
             <li key={i} className="moves__row">
               <span className="moves__number">{i / 2 + 1}.</span>
-              <Move ply={i + 1} san={sans[i]} time={times[i]} shown={shown} onGo={onGo} prefix="moves" />
-              {i + 1 < total ? <Move ply={i + 2} san={sans[i + 1]} time={times[i + 1]} shown={shown} onGo={onGo} prefix="moves" /> : <span />}
+              <Move ply={i + 1} san={sans[i]} time={times[i]} shown={shown} onGo={onGo} prefix="moves" mark={marks?.[i]} />
+              {i + 1 < total ? <Move ply={i + 2} san={sans[i + 1]} time={times[i + 1]} shown={shown} onGo={onGo} prefix="moves" mark={marks?.[i + 1]} /> : <span />}
             </li>
           ))}
         </ol>
@@ -99,7 +105,7 @@ export function MoveList({ sans, times, shown, onGo }: Props) {
   )
 }
 
-export function MoveStrip({ sans, times, shown, onGo }: Props) {
+export function MoveStrip({ sans, times, shown, onGo, marks }: Props) {
   const total = sans.length
   const box = useFollow(shown, total, true)
   if (total === 0) return null
@@ -110,7 +116,7 @@ export function MoveStrip({ sans, times, shown, onGo }: Props) {
         {sans.map((san, i) => (
           <li key={i} className="strip__item">
             {i % 2 === 0 && <span className="strip__number">{i / 2 + 1}.</span>}
-            <Move ply={i + 1} san={san} time={times[i]} shown={shown} onGo={onGo} prefix="strip" />
+            <Move ply={i + 1} san={san} time={times[i]} shown={shown} onGo={onGo} prefix="strip" mark={marks?.[i]} />
           </li>
         ))}
       </ol>

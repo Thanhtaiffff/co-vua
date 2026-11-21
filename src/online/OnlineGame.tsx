@@ -19,6 +19,8 @@ import { controlLabel, lowTime } from '../game/clock'
 import { capturedPieces, describeMove, gameStatus, isPromotion, legalDests, materialDiff, replay, type PlayedMove } from '../game/rules'
 import { END_DELAY, playMove, playSound } from '../sound'
 import { useNow } from '../useNow'
+import { moveMarks, reviewShapes } from '../reviewView'
+import { useGameReview } from '../useGameReview'
 import { showBoard, useReview } from '../useReview'
 import { navigate } from '../router'
 import { loadSaved, save } from '../storage'
@@ -150,6 +152,10 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const shownChess = useMemo(() => (review.reviewing ? replay(played.slice(0, review.shown)) : chess), [review.reviewing, review.shown, played, chess])
   const captured = capturedPieces(shownChess)
   const material = materialDiff(shownChess)
+  // Máy phân tích ván: chỉ mở khi ván đã xong (đang chơi mà mở thì thành gian lận).
+  const analysis = useGameReview(over ? played : null)
+  const reviewed = analysis.state.status === 'done' ? analysis.state.review : null
+  const marks = moveMarks(reviewed)
 
   // ---------- Đồng hồ ----------
   // Máy chủ báo thời gian còn lại lúc gửi thư; bên đang chạy giờ thì máy này tự trừ tiếp từ lúc nhận thư.
@@ -311,7 +317,14 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
     }
     // Người xem, ván đã xong, hay đang xem lại thế cờ cũ: chỉ xem, không đi được.
     if (!me || over || review.reviewing) {
-      return { ...shown, fen: shownChess.fen(), movable: { color: undefined, dests: new Map() }, premovable: { enabled: false }, highlight: { custom: new Map() } }
+      return {
+        ...shown,
+        fen: shownChess.fen(),
+        movable: { color: undefined, dests: new Map() },
+        premovable: { enabled: false },
+        highlight: { custom: new Map() },
+        drawable: { autoShapes: reviewShapes(reviewed, review.shown) },
+      }
     }
     // Lúc đối thủ đang nghĩ, kéo quân mình là đặt thêm một nước đi trước; bàn cờ hiện quân mình ở chỗ mới.
     const ahead = premoveBoard(chess, me, premoves)
@@ -321,8 +334,9 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
       movable: { color: SIDE[me], dests: turn === me && premoves.length === 0 ? legalDests(chess) : new Map() },
       premovable: { enabled: premoves.length < MAX_PREMOVES },
       highlight: { custom: ahead.squares },
+      drawable: { autoShapes: [] },
     }
-  }, [bottom, picking, shownChess, me, over, review.reviewing, chess, premoves, turn])
+  }, [bottom, picking, shownChess, me, over, review.reviewing, review.shown, reviewed, chess, premoves, turn])
 
   function handleMove(from: Key, to: Key) {
     const move = { from: from as Square, to: to as Square }
@@ -455,7 +469,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
           {bubble(bottom)}
         </div>
         <div className="board-under">
-          <MoveStrip sans={sans} times={times} shown={review.shown} onGo={review.go} />
+          <MoveStrip sans={sans} times={times} shown={review.shown} onGo={review.go} marks={marks} />
           <BoardTools onFlip={() => setFlipped((f) => !f)} />
         </div>
       </section>
@@ -528,6 +542,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
               review.go(ply)
               showBoard()
             }}
+            analysis={analysis}
           />
         ) : (
           <div className={`status${check ? ' status--check' : ''}${hinted ? '' : ' status--plain'}`} role="status">
@@ -601,7 +616,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
           </div>
         )}
 
-        <MoveList sans={sans} times={times} shown={review.shown} onGo={review.go} />
+        <MoveList sans={sans} times={times} shown={review.shown} onGo={review.go} marks={marks} />
 
         {/* Nút chỉ có hình, rê chuột vào mới hiện chữ. Màn hình hẹp (chat không có cột riêng): thêm nút Chat. */}
         {((seated && !over) || (chatting && !chatSide)) && (

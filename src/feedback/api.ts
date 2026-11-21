@@ -33,4 +33,4 @@ async function sendToServer(feedback: FeedbackSend): Promise<void> {
 
 // Bản gộp một file (`npm run build:single`, `build:demo`) không có máy chủ.
 export const sendFeedback: (feedback: FeedbackSend) => Promise<void> =
-  import.meta.env.MODE === 'single' || import.meta.env.MODE === 'demo' ? () => new Promise((resolve) => setTimeout(resolve, 400)) : sendToServer
+  import.meta.env.MODE === 'single' || import.meta.env.MODE === 'demo' || import.meta.env.MODE === 'bot' ? () => new Promise((resolve) => setTimeout(resolve, 400)) : sendToServer
