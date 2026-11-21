@@ -3,6 +3,7 @@
 // chỉ giữ kiểu Tài chọn.
 import { loadSaved, save } from '../storage'
 import type { Theme } from '../theme'
+import { liquidGlass } from './liquidGlass'
 
 export type Skin = {
   id: string
@@ -10,9 +11,12 @@ export type Skin = {
   note: string // một câu tả kiểu này
   bar: string // màu thanh trình duyệt trên điện thoại (thẻ theme-color), trùng màu nền
   suggest: Partial<Theme> // bàn cờ và quân hợp với kiểu này (bản chơi thử tự đổi theo; người chơi vẫn đổi được ở nút Chủ đề)
+  glass?: boolean // kiểu kính: bật mép kính bẻ cong (liquidGlass.ts)
 }
 
 export const SKINS: Skin[] = [
+  { id: 'be-tong-kinh', name: 'Bê tông kính (A)', note: 'Tường bê tông trần, các khối là tấm kính sáng nổi lên.', bar: '#b6b2ab', glass: true, suggest: { board: 'stone-table', pieces: 'classic', style: '2d' } },
+  { id: 'kinh-long', name: 'Kính lỏng (B)', note: 'Hình nền màu rực, kính gần trong suốt như iPhone.', bar: '#07070f', glass: true, suggest: { board: 'thick-glass', pieces: 'classic', style: '2d' } },
   { id: 'san-dau', name: 'Sân đấu', note: 'Đêm chung kết: xanh đêm, vàng giải đấu, chữ in hoa như bảng tỉ số.', bar: '#0a1430', suggest: { board: 'glass-marbles', pieces: 'classic', style: '2d' } },
   { id: 'cau-lac-bo', name: 'Câu lạc bộ', note: 'Phòng cờ cổ: gỗ óc chó, đồng thau, chữ có chân.', bar: '#1f150f', suggest: { board: 'wood', pieces: 'wood', style: '3d', shape: 'round' } },
   { id: 'giay-trang', name: 'Giấy trắng', note: 'Trắng sạch, một màu xanh cobalt, không thừa gì.', bar: '#f4f5f7', suggest: { board: 'polished-stone-gray', pieces: 'classic', style: '2d' } },
@@ -39,5 +43,6 @@ export function applySkin(skin: Skin): void {
     document.head.append(meta)
   }
   meta.content = skin.bar
+  liquidGlass(skin.glass === true)
   save('skin', skin.id)
 }

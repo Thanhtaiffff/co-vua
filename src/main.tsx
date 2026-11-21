@@ -17,6 +17,9 @@ import './skins/be-tong.css'
 import './skins/cuc-quang.css'
 import './skins/keo-ngot.css'
 import './skins/neon.css'
+import './skins/glass.css'
+import './skins/be-tong-kinh.css'
+import './skins/kinh-long.css'
 import { applySkin, savedSkin } from './skins/skins'
 
 // Đặt kiểu giao diện trước khi vẽ trang để khỏi chớp màu.

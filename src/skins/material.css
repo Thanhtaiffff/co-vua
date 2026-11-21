@@ -641,3 +641,13 @@ textarea,
   border-color: var(--line);
   background: var(--surface-2);
 }
+
+/* Bong bóng tin nhắn hiện cạnh tên đối thủ: dùng màu bong bóng chữ (đặc), vì --surface ở các kiểu kính là màu trong */
+.chat-bubble {
+  background: var(--tip);
+  color: var(--tip-ink);
+}
+
+.chat-bubble::after {
+  border-right-color: var(--tip);
+}
