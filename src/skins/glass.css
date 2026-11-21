@@ -31,6 +31,36 @@
   overflow: hidden;
 }
 
+/* Quân 3D cao hơn ô cờ nên hàng trên cùng nhô lên khỏi mép bàn. Cắt kiểu "overflow" ở trên sẽ chặt mất đầu quân, nên
+   với quân 3D thay bằng một khung cắt cao hơn bàn một chút ở phía trên: phần quân nhô lên vẫn hiện, bốn góc bàn vẫn bo
+   tròn (ô tô màu nước vừa đi ở góc không lòi ra ngoài). Trình duyệt cũ chưa hiểu shape() thì dùng inset(): hai góc trên
+   vuông, chỉ thấy khi ô góc trên được tô màu. */
+html.pieces-3d .board-frame cg-board {
+  --r: var(--board-radius, 4px);
+  overflow: visible;
+  clip-path: inset(-10% 0 0 0 round 0 0 var(--r) var(--r));
+}
+
+@supports (clip-path: shape(from 0 0, line to 1px 1px)) {
+  html.pieces-3d .board-frame cg-board {
+    clip-path: shape(
+      from 0 -10%,
+      hline to 100%,
+      vline to 0,
+      hline to calc(100% - var(--r)),
+      arc to 100% var(--r) of var(--r) cw,
+      vline to calc(100% - var(--r)),
+      arc to calc(100% - var(--r)) 100% of var(--r) cw,
+      hline to var(--r),
+      arc to 0 calc(100% - var(--r)) of var(--r) cw,
+      vline to var(--r),
+      arc to var(--r) 0 of var(--r) cw,
+      hline to 0,
+      close
+    );
+  }
+}
+
 /* Máy bật "giảm trong suốt" (macOS, Windows): bỏ kính, dùng nền đặc */
 @media (prefers-reduced-transparency: reduce) {
   :root * {
