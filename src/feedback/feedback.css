@@ -1,69 +1,50 @@
 /* ---------- Nút Góp ý ---------- */
-/* Chỉ là hình phong thư cho đầu trang khỏi rườm rà chữ. Máy có chuột: rê vào thì chữ "Góp ý" chạy ra bên trái hình.
-   Nút đứng đầu nhóm nút bên phải (nhóm bám mép phải), nên chữ chạy ra chiếm chỗ trống bên trái, các nút khác đứng yên. */
-.fb-btn {
-  position: relative;
-  width: auto;
-  min-width: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding-inline: 8px;
-  font: inherit;
-}
-
-.fb-btn svg {
-  flex: none;
-}
-
-.fb-btn__label {
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  opacity: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition:
-    max-width 220ms ease,
-    opacity 160ms ease,
-    margin 220ms ease;
-}
-
-/* Đầu trang chỉ đủ chỗ cho nút thứ tư từ 430px trở lên. Điện thoại hẹp hơn: nút nằm cuối trang. */
+/* Chỉ là hình phong thư cho đầu trang khỏi rườm rà chữ; rê chuột vào mới hiện chữ "Góp ý" (bong bóng data-tip, index.css).
+   Đầu trang chỉ đủ chỗ cho nút từ 600px trở lên. Điện thoại: nút nằm cuối trang, cạnh nút Mẹo và ghi công. */
 .fb-btn--top {
   display: none;
 }
 
 .page-foot {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   padding-top: 4px;
 }
 
-@media (min-width: 430px) {
+.page-foot__tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Dòng "Made by Thành Tài": nhỏ, mờ, không tranh chỗ với bàn cờ */
+.credit {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.credit a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+.credit a:hover {
+  border-bottom-color: var(--ink);
+}
+
+@media (min-width: 600px) {
   .fb-btn--top {
-    display: inline-flex;
+    display: grid;
   }
 
-  .page-foot {
+  .page-foot__tools {
     display: none;
-  }
-}
-
-/* Màn hình rộng mới có chỗ cho chữ chạy ra. Máy cảm ứng không rê chuột được: chạm là mở form luôn. */
-@media (min-width: 640px) {
-  .fb-btn--top:focus-visible .fb-btn__label {
-    max-width: 5em;
-    margin-right: 6px;
-    opacity: 1;
-  }
-}
-
-@media (hover: hover) and (min-width: 640px) {
-  .fb-btn--top:hover .fb-btn__label {
-    max-width: 5em;
-    margin-right: 6px;
-    opacity: 1;
   }
 }
 

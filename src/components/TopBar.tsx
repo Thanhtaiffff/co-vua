@@ -1,6 +1,7 @@
-// Đầu trang dùng chung cho mọi trang: tên web, nút chuyển giữa chơi chung một máy và chơi online, nút Góp ý, nút chọn
-// chủ đề, nút chọn bộ tiếng và nút loa. Lựa chọn chủ đề và âm thanh lưu trong máy, trang nào cũng dùng chung.
-// Form góp ý cũng nằm ở đây (một form cho cả trang; nút Góp ý cuối trang trên điện thoại cũng mở form này).
+// Đầu trang dùng chung cho mọi trang: tên web, công tắc ba nấc Online | Một máy | Với máy, rồi các nút chỉ
+// có hình (rê chuột vào mới hiện chữ): Mẹo và ghi công, Góp ý, chủ đề, bộ tiếng, loa. Lựa chọn chủ đề và âm thanh lưu
+// trong máy, trang nào cũng dùng chung. Form góp ý và bảng mẹo cũng nằm ở đây (nút cuối trang trên điện thoại cũng mở
+// hai bảng này).
 import { useEffect, useState } from 'react'
 import '../bot/bot.css'
 import { FeedbackButton, FeedbackSheet } from '../feedback/FeedbackForm'
@@ -9,19 +10,27 @@ import { playSample, playSound, selectSoundSet, setSoundEnabled, setupSound, SOU
 import { loadSaved, save } from '../storage'
 import { useTheme } from '../theme'
 import { pieceSetInfo, type PieceSetId } from '../themeCatalog'
+import { AboutButton, AboutSheet } from './AboutSheet'
 import { SoundSetPicker, type SoundMode } from './SoundSetPicker'
 import { SoundToggle } from './SoundToggle'
 import { ThemePicker } from './ThemePicker'
 
+type Mode = 'online' | 'local' | 'bot'
+
 type Props = {
-  switchTo: { path: string; label: string; short: string } // short: chữ ngắn cho điện thoại hẹp
-  botLink?: boolean // hiện nút hình máy (chơi với máy) cạnh nút chuyển chế độ; trang chơi với máy thì tắt
+  mode: Mode // trang đang mở: chơi online, chơi chung một máy hay chơi với máy
 }
 
-// Hình con robot nhỏ cho nút Chơi với máy.
+const MODES: { mode: Mode; path: string; label: string }[] = [
+  { mode: 'online', path: '/online', label: 'Online' },
+  { mode: 'local', path: '/', label: 'Một máy' },
+  { mode: 'bot', path: '/may', label: 'Với máy' },
+]
+
+// Hình con robot nhỏ cho nấc Với máy (điện thoại chỉ còn hình này, không có chữ).
 function BotIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className="mode__bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="4.5" y="8" width="15" height="11" rx="3" />
       <path d="M12 8V4.5M9.5 19v1.5M14.5 19v1.5M2.5 12.5v2M21.5 12.5v2" />
       <circle cx="12" cy="3.8" r="1" fill="currentColor" stroke="none" />
@@ -39,7 +48,7 @@ function savedSoundMode(): SoundMode {
   return loadSaved<unknown>('soundSet', 'wood') === 'wood' ? 'theme' : 'fixed'
 }
 
-export function TopBar({ switchTo, botLink = true }: Props) {
+export function TopBar({ mode }: Props) {
   const theme = useTheme()
   const [soundOn, setSoundOn] = useState<boolean>(() => loadSaved('sound', true))
   const [soundMode, setSoundMode] = useState<SoundMode>(savedSoundMode)
@@ -89,35 +98,48 @@ export function TopBar({ switchTo, botLink = true }: Props) {
 
   return (
     <header className="topbar">
-      <h1 className="brand">Cờ vua</h1>
-      <a
-        className="mode-link"
-        href={switchTo.path}
-        onClick={(e) => {
-          e.preventDefault()
-          navigate(switchTo.path)
-        }}
-      >
-        <span className="mode-link__long">{switchTo.label}</span>
-        <span className="mode-link__short">{switchTo.short}</span>
-      </a>
-      {botLink && (
+      {/* Bấm tên web là về trang đầu (chơi chung một máy) */}
+      <h1 className="brand">
         <a
-          className="mode-link bot-link"
-          href="/may"
-          aria-label="Chơi với máy"
+          className="brand__link"
+          href="/"
+          aria-label="Cờ vua, về trang đầu"
           onClick={(e) => {
             e.preventDefault()
-            navigate('/may')
+            navigate('/')
           }}
         >
-          <BotIcon />
-          <span className="bot-link__label" aria-hidden="true">
-            Chơi với máy
-          </span>
+          <span className="brand__mark" aria-hidden="true" />
+          <span className="brand__word">Cờ vua</span>
         </a>
-      )}
+      </h1>
+      {/* Máy tính: công tắc ba nấc, nấc đang mở sáng lên. Điện thoại: ẩn nấc đang mở, nấc Với máy chỉ còn hình robot. */}
+      <nav className="mode" aria-label="Chế độ chơi">
+        {MODES.map((item) => (
+          <a
+            key={item.mode}
+            className="mode__link"
+            href={item.path}
+            aria-label={item.mode === 'bot' ? 'Chơi với máy' : undefined}
+            aria-current={item.mode === mode ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault()
+              if (item.mode !== mode) navigate(item.path)
+            }}
+          >
+            {item.mode === 'bot' ? (
+              <BotIcon />
+            ) : (
+              <svg className="mode__swap" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 8.5h13.5l-3.2-3.2M19 15.5H5.5l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            <span className="mode__label">{item.label}</span>
+          </a>
+        ))}
+      </nav>
       <div className="topbar__tools">
+        <AboutButton place="top" />
         <FeedbackButton place="top" />
         <ThemePicker onPickPieces={pickPieces} />
         <SoundSetPicker
@@ -132,6 +154,7 @@ export function TopBar({ switchTo, botLink = true }: Props) {
         <SoundToggle on={soundOn} onToggle={toggleSound} />
       </div>
       <FeedbackSheet />
+      <AboutSheet />
     </header>
   )
 }

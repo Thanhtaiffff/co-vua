@@ -1,0 +1,47 @@
+/* Lớp kính: các khối nổi là tấm kính nhìn xuyên thấy tường bê tông phía sau. Độ mờ, độ đậm màu (--glass-filter) và màu
+   kính đặt trong be-tong-kinh.css. Trên Chrome/Edge, liquidGlass.ts gắn thêm --lens để mép kính bẻ cong hình phía
+   sau; trình duyệt khác không có --lens nên chỉ còn kính mờ. */
+@property --lens {
+  syntax: '*';
+  inherits: false;
+}
+
+.lens-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+:root
+  :is(.card, .tc, .moves, .result, .scorecard, .chat, .offer, .strip, .board-frame, .mode, .clock, .icon-btn, .act, .board-tool, .btn) {
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--lens,) var(--glass-filter);
+}
+
+/* Bảng nổi (chọn chủ đề, âm thanh, giới thiệu) chứa nhiều chữ nên kính đục hơn hẳn cho dễ đọc */
+:root :is(.sound-sheet, .theme-panel) {
+  background: var(--sheet-glass);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+}
+
+:root .board-frame cg-board {
+  overflow: hidden;
+}
+
+/* Máy bật "giảm trong suốt" (macOS, Windows): bỏ kính, dùng nền đặc */
+@media (prefers-reduced-transparency: reduce) {
+  :root * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  :root {
+    --panel: var(--solid-panel);
+    --btn: var(--solid-panel);
+    --chip: var(--solid-panel);
+    --tray-bg: var(--solid-panel);
+  }
+}

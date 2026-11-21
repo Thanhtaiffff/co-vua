@@ -1,47 +1,5 @@
 /* Giao diện riêng của chơi với máy. Dùng chung màu (token) của index.css. */
 
-/* Nút hình robot ở đầu trang (cạnh nút chuyển chế độ): chỉ có hình, rê chuột vào thì chữ "Chơi với máy" chạy ra. */
-.bot-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 32px;
-  padding: 0 8px;
-}
-
-.bot-link svg {
-  flex: none;
-  width: 20px;
-  height: 20px;
-}
-
-.bot-link__label {
-  max-width: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    max-width 220ms ease,
-    opacity 160ms ease,
-    margin 220ms ease;
-}
-
-@media (min-width: 640px) {
-  .bot-link:focus-visible .bot-link__label {
-    max-width: 8em;
-    margin-left: 6px;
-    opacity: 1;
-  }
-}
-
-@media (hover: hover) and (min-width: 640px) {
-  .bot-link:hover .bot-link__label {
-    max-width: 8em;
-    margin-left: 6px;
-    opacity: 1;
-  }
-}
-
 /* Bảng chọn trước ván */
 .bot-setup {
   display: flex;
@@ -155,34 +113,4 @@
 
 .bot-time[open] .tc {
   margin-top: 8px;
-}
-
-/* Điện thoại hẹp: đầu trang thêm nút robot thì hết chỗ, nên nút chuyển chế độ dùng chữ ngắn ("Online", "Một máy"). */
-.mode-link__short {
-  display: none;
-}
-
-@media (max-width: 479px) {
-  .topbar .mode-link__long {
-    display: none;
-  }
-
-  .topbar .mode-link__short {
-    display: inline;
-  }
-
-  .topbar .mode-link.bot-link {
-    min-width: 32px;
-    padding-inline: 6px;
-  }
-}
-
-@media (max-width: 429px) {
-  .topbar {
-    gap: 5px;
-  }
-
-  .topbar .mode-link {
-    padding-inline: 8px;
-  }
 }

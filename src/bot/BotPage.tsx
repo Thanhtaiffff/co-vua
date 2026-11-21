@@ -330,7 +330,7 @@ export function BotPage() {
 
   return (
     <div className="app">
-      <TopBar switchTo={{ path: '/', label: 'Chơi một máy', short: 'Một máy' }} botLink={false} />
+      <TopBar mode="bot" />
 
       <main className="table">
         <section className="board-col">
