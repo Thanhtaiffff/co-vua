@@ -10,9 +10,11 @@ import './skins/material.css'
 import './skins/glass.css'
 import './skins/be-tong-kinh.css'
 import { liquidGlass } from './skins/liquidGlass'
+import { liteMode } from './skins/lite'
 
-// Mép kính bẻ cong (chỉ trên Chrome, Edge, Samsung Internet; trình duyệt khác vẫn là kính mờ thường).
-liquidGlass(true)
+// Mép kính bẻ cong chỉ bật trên máy tính dùng Chrome, Edge (trình duyệt khác vẫn là kính mờ thường). Điện thoại dùng
+// chế độ nhẹ cho khỏi giật, xem skins/lite.ts.
+liquidGlass(liteMode() === 'full')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
