@@ -2,6 +2,7 @@
 // để máy chấm xem mình đi hay, đi dở chỗ nào (nút nhỏ bên cạnh mở ván trên lichess), và "Thống kê ván" (đóng sẵn).
 import type { Chess, Color } from 'chess.js'
 import { analysisUrl, winnerOf, type GameResult } from '../game/rules'
+import { resultReason } from './resultReason'
 import type { GameReviewApi } from '../useGameReview'
 import { GameReviewPanel } from './GameReview'
 import { GameStats } from './GameStats'
@@ -34,35 +35,6 @@ const ICON_EXTERNAL = (
   </svg>
 )
 
-const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
-
-function reason(result: GameResult, name: (color: Color) => string): string {
-  switch (result.kind) {
-    case 'checkmate':
-      return 'Chiếu bí'
-    case 'timeout':
-      return `${name(other(result.winner))} hết giờ`
-    case 'resign':
-      return `${name(other(result.winner))} đầu hàng`
-    case 'timeoutDraw':
-      return `${name(result.flagged)} hết giờ, nhưng ${name(other(result.flagged))} không còn đủ quân để chiếu bí`
-    case 'agreed':
-      return 'Hai bên đồng ý hòa'
-    case 'stalemate':
-      return 'Hết nước đi mà không bị chiếu (pat)'
-    case 'insufficient':
-      return 'Không còn đủ quân để chiếu bí'
-    case 'threefold':
-      return 'Lặp lại thế cờ 3 lần'
-    case 'fifty':
-      return '50 nước không ăn quân, không đi tốt'
-    case 'aborted':
-      return 'Chưa ai đi quá một nước nên không tính'
-    case 'playing':
-      return ''
-  }
-}
-
 export function ResultCard({ result, name, playerName = name, chess, sans, times, clocks, orientation, shown, onGo, analysis }: Props) {
   const winner = winnerOf(result)
   const title = winner ? `${name(winner)} thắng` : result.kind === 'aborted' ? 'Ván đã huỷ' : 'Hòa'
@@ -84,7 +56,7 @@ export function ResultCard({ result, name, playerName = name, chess, sans, times
         )}
         <div className="result__heading">
           <p className="result__title">{title}</p>
-          <p className="result__reason">{reason(result, name)}</p>
+          <p className="result__reason">{resultReason(result, name)}</p>
         </div>
       </div>
 

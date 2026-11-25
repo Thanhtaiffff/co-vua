@@ -14,6 +14,7 @@ import { MoveList, MoveStrip } from '../components/MoveList'
 import { PlayerBar, type ClockFace } from '../components/PlayerBar'
 import { PromotionPicker } from '../components/PromotionPicker'
 import { ResultCard } from '../components/ResultCard'
+import { resultReason } from '../components/resultReason'
 import { describeGame, useFeedbackGame } from '../feedback/context'
 import { controlLabel, lowTime } from '../game/clock'
 import { capturedPieces, describeMove, gameStatus, isPromotion, legalDests, materialDiff, replay, type PlayedMove } from '../game/rules'
@@ -390,6 +391,13 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const drawOffered = me !== null && game.drawOffer === me
   // Đã xin hòa trong lượt này và bị từ chối (hay đã rút lời): chờ có nước mới rồi xin lại.
   const drawUsed = me !== null && game.drawAsked[me] && !drawOffered
+  // Bảng kết quả nổi trên bàn cờ: nói theo người đang xem (người chơi: thắng, thua; người xem: ai thắng).
+  const endWinner = 'winner' in status ? status.winner : null
+  const endTitle = !endWinner ? 'Hòa' : me === null ? `${name(endWinner)} thắng!` : endWinner === me ? 'Bạn thắng!' : 'Bạn thua'
+  function analyse() {
+    analysis.start()
+    requestAnimationFrame(() => document.querySelector('.result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  }
   const rematchLeft = me ? REMATCH_ASKS - game.rematchAsked[me] : 0
   const canInvite = me !== null && opponent !== null && !game.rematch[me] && !game.rematch[opponent] && game.rematchDeclined !== me && rematchLeft > 0
 
@@ -450,7 +458,18 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
         <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
           <Board config={config} onMove={handleMove} onPremove={handlePremove} onPremoveCancel={premoves.length > 0 ? cancelPremoves : undefined} />
           {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={() => setPromotion(null)} />}
-          <EndFx event={endFx} />
+          <EndFx
+            event={endFx}
+            end={over && !aborted ? { winner: 'winner' in status ? status.winner : null } : undefined}
+            chess={chess}
+            orientation={SIDE[bottom]}
+            reviewing={review.reviewing}
+            title={endTitle}
+            reason={resultReason(status, who)}
+            onNew={canInvite ? () => send({ t: 'rematch', yes: true }) : undefined}
+            newLabel="Đấu ván nữa"
+            onAnalyse={analysis.state.status === 'idle' ? analyse : undefined}
+          />
         </div>
         <div className="bar-anchor">
           <PlayerBar

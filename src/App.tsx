@@ -12,6 +12,7 @@ import { PlayerBar, type ClockFace } from './components/PlayerBar'
 import { PlayerNames } from './components/PlayerNames'
 import { PromotionPicker } from './components/PromotionPicker'
 import { ResultCard } from './components/ResultCard'
+import { resultReason } from './components/resultReason'
 import { TimeControlPicker } from './components/TimeControlPicker'
 import { TopBar } from './components/TopBar'
 import { describeGame, useFeedbackGame } from './feedback/context'
@@ -210,6 +211,18 @@ export default function App() {
     setClock((prev) => undoMove(prev, Date.now()))
   }
 
+  // Dòng lớn ở bảng kết quả nổi trên bàn cờ.
+  function endTitle(): string {
+    if (!winner) return 'Hòa'
+    return `${name(winner)} thắng!`
+  }
+
+  // Bấm Phân tích ở bảng kết quả trên bàn cờ: bật máy chấm, cuộn tới thẻ kết quả (điện thoại nằm dưới bàn cờ).
+  function analyse() {
+    analysis.start()
+    requestAnimationFrame(() => document.querySelector('.result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  }
+
   function newGame() {
     if (moves.length > 0 && !over && !confirmNew) {
       setConfirmNew(true)
@@ -248,7 +261,17 @@ export default function App() {
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
             {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={cancelPromotion} />}
-            <EndFx event={endFx} />
+            <EndFx
+              event={endFx}
+              end={over ? { winner } : undefined}
+              chess={chess}
+              orientation={boardSide}
+              reviewing={review.reviewing}
+              title={endTitle()}
+              reason={resultReason(status, name)}
+              onNew={newGame}
+              onAnalyse={analysis.state.status === 'idle' ? analyse : undefined}
+            />
           </div>
           <PlayerBar
             color={bottom}
