@@ -6,7 +6,6 @@ import { ActionButton } from './components/ActionButton'
 import { Board } from './components/Board'
 import { BoardTools } from './components/BoardTools'
 import { EndFx } from './components/EndFx'
-import { DEMO_GAMES, END_DEMO, EndFxDemo, type DemoGame } from './components/EndFxDemo'
 import { endFxEvent, type EndFxEvent } from './components/endFxEvent'
 import { MoveList, MoveStrip } from './components/MoveList'
 import { PlayerBar, type ClockFace } from './components/PlayerBar'
@@ -108,9 +107,7 @@ export default function App() {
       const decisive = status.kind === 'checkmate' || status.kind === 'timeout'
       const byClock = status.kind === 'timeout' || status.kind === 'timeoutDraw'
       playSound(decisive ? 'end' : 'draw', byClock ? 0 : END_DELAY)
-      // Bản chơi thử: coi Trắng là "Bạn" để xem được cả hiệu ứng thua.
-      if (END_DEMO && decisive && winner === 'b') setEndFx(endFxEvent('lose', 'w'))
-      else setEndFx(endFxEvent(decisive ? 'win' : 'draw', winner))
+      setEndFx(endFxEvent(decisive ? 'win' : 'draw', winner))
     }
     lastKind.current = status.kind
   }, [status.kind, winner])
@@ -217,7 +214,6 @@ export default function App() {
   // Dòng lớn ở bảng kết quả nổi trên bàn cờ.
   function endTitle(): string {
     if (!winner) return 'Hòa'
-    if (END_DEMO) return winner === 'w' ? 'Bạn thắng!' : 'Bạn thua'
     return `${name(winner)} thắng!`
   }
 
@@ -225,18 +221,6 @@ export default function App() {
   function analyse() {
     analysis.start()
     requestAnimationFrame(() => document.querySelector('.result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
-  }
-
-  // Bản chơi thử: bày sẵn một ván ngắn, nước cuối đi sau một nhịp để thấy hiệu ứng chạy như thật.
-  function tryEnd(game: DemoGame) {
-    const all = DEMO_GAMES[game]
-    setPromotion(null)
-    setMoves(all.slice(0, -1))
-    setClock((prev) => newClock(prev.control))
-    window.setTimeout(() => {
-      playMove(describeMove(replay(all.slice(0, -1)), all[all.length - 1]))
-      setMoves(all)
-    }, 700)
   }
 
   function newGame() {
@@ -372,7 +356,6 @@ export default function App() {
         </aside>
       </main>
       <PageFoot />
-      {END_DEMO && <EndFxDemo onTry={tryEnd} />}
     </div>
   )
 }

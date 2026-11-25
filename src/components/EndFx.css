@@ -1,4 +1,4 @@
-/* Hiệu ứng hết ván (EndFx.tsx): phủ lên mặt bàn cờ, không chặn bấm. Màu theo kiểu giao diện đang dùng. */
+/* Hiệu ứng hết ván (EndFx.tsx): phủ lên mặt bàn cờ, không chặn bấm (trừ lúc bảng kết quả đang mở). Màu theo kiểu giao diện đang dùng. */
 .endfx {
   position: absolute;
   inset: var(--tray, 0px);
@@ -9,84 +9,6 @@
   border-radius: var(--board-radius, 4px);
   pointer-events: none;
   container-type: size;
-}
-
-.endfx--lose {
-  animation: endfx-dim 3.2s ease both;
-}
-
-.endfx__medal {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 32cqmin;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--panel, #1c1c1c);
-  box-shadow:
-    0 0 0 0.9cqmin var(--accent, #fff),
-    0 2cqmin 6cqmin rgb(0 0 0 / 0.45);
-  animation: endfx-medal 3.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-}
-
-.endfx--lose .endfx__medal {
-  box-shadow:
-    0 0 0 0.9cqmin var(--muted, #888),
-    0 2cqmin 6cqmin rgb(0 0 0 / 0.45);
-}
-
-.endfx__crown {
-  position: absolute;
-  top: -11cqmin;
-  left: 50%;
-  width: 15cqmin;
-  translate: -50% 0;
-  fill: var(--crown, #f6c443);
-  stroke: rgb(0 0 0 / 0.35);
-  stroke-width: 1.2;
-  stroke-linejoin: round;
-  animation: endfx-crown 3.2s ease both;
-}
-
-.endfx__crown svg {
-  display: block;
-  width: 100%;
-}
-
-/* Vua của bên thắng (hay của mình khi thua), viền tương phản cho thấy rõ trên nền huy hiệu */
-.endfx__kingbox {
-  display: grid;
-  place-items: center;
-  width: 64%;
-  aspect-ratio: 1;
-}
-
-.endfx__kingbox--w {
-  color: #fff;
-  filter: drop-shadow(0 0 0.35cqmin #111) drop-shadow(0 0 0.2cqmin #111);
-}
-
-.endfx__kingbox--b {
-  color: #111;
-  filter: drop-shadow(0 0 0.35cqmin #fff) drop-shadow(0 0 0.2cqmin #fff);
-}
-
-.endfx__king {
-  width: 100%;
-  height: 100%;
-  background: currentColor;
-  -webkit-mask: var(--fig) center / contain no-repeat;
-  mask: var(--fig) center / contain no-repeat;
-  transform-origin: 50% 92%;
-}
-
-.endfx--lose .endfx__king {
-  animation: endfx-topple 3.2s ease both;
-}
-
-.endfx__half {
-  font: 700 15cqmin/1 var(--heading-font, var(--font-display));
-  color: var(--ink, #fff);
 }
 
 /* Pháo giấy: bay từ giữa ra rồi rơi xuống */
@@ -121,74 +43,6 @@
   background: var(--danger, #f0857c);
 }
 
-@keyframes endfx-medal {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-
-  12% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-
-  20%,
-  84% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-}
-
-@keyframes endfx-crown {
-  0%,
-  10% {
-    opacity: 0;
-    transform: translateY(-40%) rotate(-12deg);
-  }
-
-  24%,
-  84% {
-    opacity: 1;
-    transform: none;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes endfx-topple {
-  0%,
-  16% {
-    transform: none;
-  }
-
-  42%,
-  100% {
-    transform: rotate(-80deg) translateX(-6%);
-  }
-}
-
-@keyframes endfx-dim {
-  0% {
-    background: transparent;
-  }
-
-  15%,
-  80% {
-    background: rgb(0 0 0 / 0.32);
-  }
-
-  100% {
-    background: transparent;
-  }
-}
-
 @keyframes endfx-bit {
   0% {
     opacity: 0;
@@ -213,7 +67,6 @@
   }
 }
 
-/* ---------- Kiểu king / card: vua đổ ngay trên bàn ---------- */
 .endfx-anchor {
   display: contents;
 }
@@ -228,26 +81,26 @@
   animation: endfx-dim-soft 2.4s ease both;
 }
 
-/* Vua bên thua: xoay quanh chân. Bàn cờ đặt quân bằng translate(x, y), tâm xoay cộng thêm (x, y) đó (EndFx.tsx đo). */
-cg-board[data-fall='w'] piece.king.white,
-cg-board[data-fall='b'] piece.king.black {
+/* Vua bên thua: xoay quanh giữa ô. Bàn cờ đặt quân bằng translate(x, y), tâm xoay cộng thêm (x, y) đó (EndFx.tsx đo). */
+[data-fall='w'] cg-board piece.king.white,
+[data-fall='b'] cg-board piece.king.black {
   transform-origin: calc(var(--fall-x) + 50%) calc(var(--fall-y) + 100% - var(--sq) * 0.48);
   rotate: var(--fall-to);
 }
 
-cg-board[data-fall-side='left'] {
+.board[data-fall-side='left'] {
   --fall-to: -80deg;
   --fall-back: 9deg;
 }
 
-cg-board[data-fall-side='right'] {
+.board[data-fall-side='right'] {
   --fall-to: 80deg;
   --fall-back: -9deg;
 }
 
 /* Lắc nhẹ về sau, rồi đổ xuống như bị đẩy, nảy lên một chút */
-cg-board[data-fall-anim][data-fall='w'] piece.king.white,
-cg-board[data-fall-anim][data-fall='b'] piece.king.black {
+[data-fall-anim][data-fall='w'] cg-board piece.king.white,
+[data-fall-anim][data-fall='b'] cg-board piece.king.black {
   animation: endfx-fall 1.15s both;
 }
 
@@ -288,8 +141,8 @@ cg-board[data-fall-anim][data-fall='b'] piece.king.black {
 
 .endfx__tag {
   position: absolute;
-  top: -12%;
-  right: -12%;
+  top: -2%;
+  right: -10%;
   display: grid;
   place-items: center;
   width: 50%;
@@ -331,7 +184,7 @@ cg-board[data-fall-anim][data-fall='b'] piece.king.black {
   }
 }
 
-/* Bảng kết quả nổi giữa bàn (kiểu card). Bấm ra ngoài bảng là đóng. */
+/* Bảng kết quả nổi giữa bàn. Bấm ra ngoài bảng là đóng. */
 .endfx--open {
   pointer-events: auto;
   animation: endfx-scrim 0.4s ease 0.85s both;
@@ -454,25 +307,14 @@ html.lite-max .endfx__bit:nth-child(2n) {
   display: none;
 }
 
-/* Máy bật "giảm chuyển động": chỉ huy hiệu hiện lên rồi tắt, không bay nhảy */
+/* Máy bật "giảm chuyển động": không pháo giấy, vua nằm sẵn, bảng kết quả chỉ hiện dần */
 @media (prefers-reduced-motion: reduce) {
   .endfx__confetti {
     display: none;
   }
 
-  .endfx__medal,
-  .endfx__crown {
-    animation-name: endfx-fade;
-    animation-timing-function: linear;
-  }
-
-  .endfx--lose .endfx__king {
-    animation: none;
-    transform: rotate(-80deg);
-  }
-
-  cg-board[data-fall-anim][data-fall='w'] piece.king.white,
-  cg-board[data-fall-anim][data-fall='b'] piece.king.black,
+  [data-fall-anim][data-fall='w'] cg-board piece.king.white,
+  [data-fall-anim][data-fall='b'] cg-board piece.king.black,
   .endfx--fresh .endfx__tag {
     animation: none;
   }
@@ -491,67 +333,4 @@ html.lite-max .endfx__bit:nth-child(2n) {
   100% {
     opacity: 1;
   }
-}
-
-@keyframes endfx-fade {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  8%,
-  88% {
-    opacity: 1;
-  }
-}
-
-/* Bảng đổi kiểu, chỉ có trong bản chơi thử */
-.endfx-demo {
-  position: fixed;
-  left: 50%;
-  bottom: 10px;
-  z-index: 50;
-  translate: -50% 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  width: max-content;
-  max-width: calc(100vw - 16px);
-  border-radius: 18px;
-  background: rgb(24 22 20 / 0.86);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
-  font: 600 12.5px/1 var(--font-body, system-ui);
-}
-
-.endfx-demo__row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-}
-
-.endfx-demo__label {
-  color: #bbb;
-  padding: 0 4px;
-}
-
-.endfx-demo button {
-  border: 0;
-  border-radius: 999px;
-  padding: 8px 11px;
-  font: inherit;
-  cursor: pointer;
-  background: rgb(255 255 255 / 0.12);
-  color: #fff;
-}
-
-.endfx-demo .endfx-demo__pick.is-on {
-  background: var(--accent, #ff5a1f);
-  color: #1a0a03;
-}
-
-.endfx-demo .endfx-demo__try {
-  background: rgb(255 255 255 / 0.9);
-  color: #111;
 }

@@ -1,14 +1,12 @@
-// Hiệu ứng hết ván, vẽ đè lên bàn cờ. Có ba kiểu (endStyle.ts):
-// - medal: huy hiệu giữa bàn cờ trong chốc lát rồi tự tắt (thắng: vương miện + pháo giấy; thua: vua đổ; hòa: ½).
-// - king: vua bên thua đổ nghiêng ngay trên ô của nó (đổ đúng quân đang dùng, 2D hay 3D đều được), vua bên thắng đội
+// Hiệu ứng hết ván, vẽ đè lên bàn cờ (Tài chọn kiểu "vua đổ + bảng nổi", 2026-11-25):
+// - vua bên thua đổ nghiêng ngay trên ô của nó (đổ đúng quân đang dùng, 2D hay 3D đều được), vua bên thắng đội
 //   vương miện nhỏ, hòa thì hai vua có dấu ½. Giữ nguyên tới khi xem lại nước cũ, đi lại hay ván mới.
-// - card: như king, thêm bảng kết quả nhỏ nổi giữa bàn (ai thắng, vì sao, Ván mới, Phân tích). Bấm ra ngoài là đóng.
+// - bảng kết quả nhỏ nổi giữa bàn (ai thắng, vì sao, Ván mới, Phân tích). Bấm ra ngoài hay nút X là đóng.
 // Pháo giấy chỉ có khi mình thắng (hay chơi chung một máy). Máy bật "giảm chuyển động" thì không bay nhảy, vua nằm sẵn.
 // Màu lấy từ kiểu giao diện đang dùng (--accent, --led, --crown...).
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { Chess, Color, Square } from 'chess.js'
 import type { EndFxEvent } from './endFxEvent'
-import { useEndStyle } from './endStyle'
 import './EndFx.css'
 
 const SHOW_MS = 3200
@@ -75,7 +73,6 @@ type Props = {
 }
 
 export function EndFx({ event, end, chess, orientation = 'white', reviewing = false, title, reason, onNew, newLabel = 'Ván mới', onAnalyse }: Props) {
-  const style = useEndStyle()
   // Hiện xong thì nhớ số thứ tự để tắt; lần hết ván sau có số mới nên hiện lại.
   const [doneId, setDoneId] = useState(0)
   const [closedId, setClosedId] = useState(0)
@@ -91,36 +88,37 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
   if (reviewing && event && closedId !== event.id) setClosedId(event.id)
 
   const fresh = event && event.id !== doneId ? event : null
-  const onBoard = style !== 'medal' && end && chess && !reviewing ? end : null
+  const onBoard = end && chess && !reviewing ? end : null
   const winner = onBoard?.winner ?? null
   const fallen = onBoard && winner ? other(winner) : null
   const animate = fresh !== null
 
   // Vua đổ: xoay đúng quân vua trên bàn cờ quanh chân của nó. Bàn cờ đặt quân bằng transform: translate(x, y), nên
-  // tâm xoay phải cộng thêm đúng (x, y) đó; cỡ ô đo lại mỗi khi bàn đổi cỡ.
+  // tâm xoay phải cộng thêm đúng (x, y) đó; cỡ ô đo lại mỗi khi bàn đổi cỡ. Ghi lên khung bọc bàn cờ (thẻ .board),
+  // vì bàn cờ vẽ lại cả phần bên trong mỗi khi đổi cỡ.
   const fallSquare = fallen && chess ? kingSquare(chess, fallen) : null
   useEffect(() => {
-    const board = anchor.current?.parentElement?.querySelector('cg-board')
-    if (!(board instanceof HTMLElement) || !fallen || !fallSquare) return
+    const host = anchor.current?.parentElement?.querySelector('.board')
+    if (!(host instanceof HTMLElement) || !fallen || !fallSquare) return
     const { col, row } = cell(fallSquare, orientation)
     const place = () => {
-      const size = board.clientWidth / 8
-      board.style.setProperty('--fall-x', `${col * size}px`)
-      board.style.setProperty('--fall-y', `${row * size}px`)
-      board.style.setProperty('--sq', `${size}px`)
+      const size = (host.querySelector('cg-board')?.clientWidth ?? host.clientWidth) / 8
+      host.style.setProperty('--fall-x', `${col * size}px`)
+      host.style.setProperty('--fall-y', `${row * size}px`)
+      host.style.setProperty('--sq', `${size}px`)
     }
     place()
-    board.dataset.fall = fallen
+    host.dataset.fall = fallen
     // Đổ về phía có chỗ trống hơn: vua ở nửa phải thì đổ sang trái và ngược lại.
-    board.dataset.fallSide = col >= 4 ? 'left' : 'right'
-    if (animate) board.dataset.fallAnim = ''
+    host.dataset.fallSide = col >= 4 ? 'left' : 'right'
+    if (animate) host.dataset.fallAnim = ''
     const resize = new ResizeObserver(place)
-    resize.observe(board)
+    resize.observe(host)
     return () => {
       resize.disconnect()
-      delete board.dataset.fall
-      delete board.dataset.fallSide
-      delete board.dataset.fallAnim
+      delete host.dataset.fall
+      delete host.dataset.fallSide
+      delete host.dataset.fallAnim
     }
   }, [fallen, fallSquare, orientation, animate])
 
@@ -137,14 +135,14 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
     }
   }
 
-  // Pháo giấy bắn ra từ ô vua bên thắng (kiểu medal: từ giữa bàn).
+  // Pháo giấy bắn ra từ ô vua bên thắng.
   const confettiAt = (() => {
-    if (style === 'medal' || !chess || !fresh || fresh.kind !== 'win' || !fresh.color) return null
+    if (!chess || !fresh || fresh.kind !== 'win' || !fresh.color) return null
     const square = kingSquare(chess, fresh.color)
     return square ? cell(square, orientation) : null
   })()
 
-  const cardOpen = style === 'card' && event && event.id !== closedId && onBoard && !reviewing
+  const cardOpen = event && event.id !== closedId && onBoard && !reviewing
   const close = () => event && setClosedId(event.id)
 
   useEffect(() => {
@@ -153,8 +151,6 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
-
-  if (style === 'medal') return <div ref={anchor} className="endfx-anchor">{fresh && <Medal event={fresh} />}</div>
 
   const kind = fresh?.kind ?? null
   return (
@@ -228,38 +224,6 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
           )}
         </div>
       )}
-    </div>
-  )
-}
-
-// Kiểu medal (như bản cũ): huy hiệu giữa bàn cờ trong 3 giây.
-function Medal({ event }: { event: EndFxEvent }) {
-  const { kind, color } = event
-  return (
-    <div key={event.id} className={`endfx endfx--medal endfx--${kind}`} aria-hidden="true">
-      {kind === 'win' && (
-        <div className="endfx__confetti">
-          {CONFETTI.map((bit, i) => (
-            <i
-              key={i}
-              className={`endfx__bit endfx__bit--${bit.tone}`}
-              style={{ '--x': bit.x, '--y': bit.y, '--r': `${bit.r}deg`, '--d': `${bit.delay}ms` } as CSSProperties}
-            />
-          ))}
-        </div>
-      )}
-      <div className="endfx__medal">
-        {kind === 'draw' ? (
-          <span className="endfx__half">½</span>
-        ) : (
-          <>
-            {kind === 'win' && <span className="endfx__crown">{CROWN}</span>}
-            <span className={`endfx__kingbox endfx__kingbox--${color ?? 'w'}`}>
-              <span className="endfx__king fig--k" />
-            </span>
-          </>
-        )}
-      </div>
     </div>
   )
 }
