@@ -19,7 +19,7 @@
   // là thêm một dòng "migrations" mới, không sửa dòng cũ.
   // Góp ý thành Issue trong repo riêng tư này. Token GitHub để tạo Issue là Secret tên GITHUB_TOKEN, dán trong trang
   // quản lý Cloudflare (Worker chess > Settings > Variables and Secrets), không nằm ở đây.
-  "vars": { "GITHUB_REPO": "thanhtaiffff-dot/co-vua-gop-y" },
+  "vars": { "GITHUB_REPO": "Thanhtaiffff/co-vua-gop-y" },
   "durable_objects": {
     "bindings": [
       { "name": "ROOMS", "class_name": "ChessRoom" },
