@@ -36,7 +36,7 @@ const ICON_EXTERNAL = (
 
 const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
 
-function reason(result: GameResult, name: (color: Color) => string): string {
+export function resultReason(result: GameResult, name: (color: Color) => string): string {
   switch (result.kind) {
     case 'checkmate':
       return 'Chiếu bí'
@@ -84,7 +84,7 @@ export function ResultCard({ result, name, playerName = name, chess, sans, times
         )}
         <div className="result__heading">
           <p className="result__title">{title}</p>
-          <p className="result__reason">{reason(result, name)}</p>
+          <p className="result__reason">{resultReason(result, name)}</p>
         </div>
       </div>
 

@@ -6,12 +6,13 @@ import { ActionButton } from './components/ActionButton'
 import { Board } from './components/Board'
 import { BoardTools } from './components/BoardTools'
 import { EndFx } from './components/EndFx'
+import { DEMO_GAMES, END_DEMO, EndFxDemo, type DemoGame } from './components/EndFxDemo'
 import { endFxEvent, type EndFxEvent } from './components/endFxEvent'
 import { MoveList, MoveStrip } from './components/MoveList'
 import { PlayerBar, type ClockFace } from './components/PlayerBar'
 import { PlayerNames } from './components/PlayerNames'
 import { PromotionPicker } from './components/PromotionPicker'
-import { ResultCard } from './components/ResultCard'
+import { ResultCard, resultReason } from './components/ResultCard'
 import { TimeControlPicker } from './components/TimeControlPicker'
 import { TopBar } from './components/TopBar'
 import { describeGame, useFeedbackGame } from './feedback/context'
@@ -106,7 +107,9 @@ export default function App() {
       const decisive = status.kind === 'checkmate' || status.kind === 'timeout'
       const byClock = status.kind === 'timeout' || status.kind === 'timeoutDraw'
       playSound(decisive ? 'end' : 'draw', byClock ? 0 : END_DELAY)
-      setEndFx(endFxEvent(decisive ? 'win' : 'draw', winner))
+      // Bản chơi thử: coi Trắng là "Bạn" để xem được cả hiệu ứng thua.
+      if (END_DEMO && decisive && winner === 'b') setEndFx(endFxEvent('lose', 'w'))
+      else setEndFx(endFxEvent(decisive ? 'win' : 'draw', winner))
     }
     lastKind.current = status.kind
   }, [status.kind, winner])
@@ -210,6 +213,31 @@ export default function App() {
     setClock((prev) => undoMove(prev, Date.now()))
   }
 
+  // Dòng lớn ở bảng kết quả nổi trên bàn cờ.
+  function endTitle(): string {
+    if (!winner) return 'Hòa'
+    if (END_DEMO) return winner === 'w' ? 'Bạn thắng!' : 'Bạn thua'
+    return `${name(winner)} thắng!`
+  }
+
+  // Bấm Phân tích ở bảng kết quả trên bàn cờ: bật máy chấm, cuộn tới thẻ kết quả (điện thoại nằm dưới bàn cờ).
+  function analyse() {
+    analysis.start()
+    requestAnimationFrame(() => document.querySelector('.result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  }
+
+  // Bản chơi thử: bày sẵn một ván ngắn, nước cuối đi sau một nhịp để thấy hiệu ứng chạy như thật.
+  function tryEnd(game: DemoGame) {
+    const all = DEMO_GAMES[game]
+    setPromotion(null)
+    setMoves(all.slice(0, -1))
+    setClock((prev) => newClock(prev.control))
+    window.setTimeout(() => {
+      playMove(describeMove(replay(all.slice(0, -1)), all[all.length - 1]))
+      setMoves(all)
+    }, 700)
+  }
+
   function newGame() {
     if (moves.length > 0 && !over && !confirmNew) {
       setConfirmNew(true)
@@ -248,7 +276,17 @@ export default function App() {
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
             {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={cancelPromotion} />}
-            <EndFx event={endFx} />
+            <EndFx
+              event={endFx}
+              end={over ? { winner } : undefined}
+              chess={chess}
+              orientation={boardSide}
+              reviewing={review.reviewing}
+              title={endTitle()}
+              reason={resultReason(status, name)}
+              onNew={newGame}
+              onAnalyse={analysis.state.status === 'idle' ? analyse : undefined}
+            />
           </div>
           <PlayerBar
             color={bottom}
@@ -333,6 +371,7 @@ export default function App() {
         </aside>
       </main>
       <PageFoot />
+      {END_DEMO && <EndFxDemo onTry={tryEnd} />}
     </div>
   )
 }

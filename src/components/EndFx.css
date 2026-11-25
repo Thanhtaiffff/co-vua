@@ -48,6 +48,11 @@
   animation: endfx-crown 3.2s ease both;
 }
 
+.endfx__crown svg {
+  display: block;
+  width: 100%;
+}
+
 /* Vua của bên thắng (hay của mình khi thua), viền tương phản cho thấy rõ trên nền huy hiệu */
 .endfx__kingbox {
   display: grid;
@@ -92,8 +97,8 @@
 
 .endfx__bit {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: var(--oy, 50%);
+  left: var(--ox, 50%);
   width: 1.6cqmin;
   height: 2.8cqmin;
   border-radius: 0.3cqmin;
@@ -208,6 +213,247 @@
   }
 }
 
+/* ---------- Kiểu king / card: vua đổ ngay trên bàn ---------- */
+.endfx-anchor {
+  display: contents;
+}
+
+.endfx--board {
+  display: grid;
+  place-items: center;
+}
+
+/* Lúc vừa thua: bàn tối đi một chút rồi sáng lại (nhẹ hơn kiểu huy hiệu) */
+.endfx--board.endfx--lose {
+  animation: endfx-dim-soft 2.4s ease both;
+}
+
+/* Vua bên thua: xoay quanh chân. Bàn cờ đặt quân bằng translate(x, y), tâm xoay cộng thêm (x, y) đó (EndFx.tsx đo). */
+cg-board[data-fall='w'] piece.king.white,
+cg-board[data-fall='b'] piece.king.black {
+  transform-origin: calc(var(--fall-x) + 50%) calc(var(--fall-y) + 100% - var(--sq) * 0.48);
+  rotate: var(--fall-to);
+}
+
+cg-board[data-fall-side='left'] {
+  --fall-to: -80deg;
+  --fall-back: 9deg;
+}
+
+cg-board[data-fall-side='right'] {
+  --fall-to: 80deg;
+  --fall-back: -9deg;
+}
+
+/* Lắc nhẹ về sau, rồi đổ xuống như bị đẩy, nảy lên một chút */
+cg-board[data-fall-anim][data-fall='w'] piece.king.white,
+cg-board[data-fall-anim][data-fall='b'] piece.king.black {
+  animation: endfx-fall 1.15s both;
+}
+
+@keyframes endfx-fall {
+  0% {
+    rotate: 0deg;
+    animation-timing-function: ease-out;
+  }
+
+  22% {
+    rotate: var(--fall-back);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.4);
+  }
+
+  70% {
+    rotate: var(--fall-to);
+    animation-timing-function: ease-out;
+  }
+
+  82% {
+    rotate: calc(var(--fall-to) * 0.9);
+    animation-timing-function: ease-in;
+  }
+
+  100% {
+    rotate: var(--fall-to);
+  }
+}
+
+/* Dấu trên ô vua: vương miện cho bên thắng, ½ cho hai bên khi hòa. Nằm ở góc trên bên phải ô. */
+.endfx__mark {
+  position: absolute;
+  left: calc(var(--c) * 12.5%);
+  top: calc(var(--r) * 12.5%);
+  width: 12.5%;
+  height: 12.5%;
+}
+
+.endfx__tag {
+  position: absolute;
+  top: -12%;
+  right: -12%;
+  display: grid;
+  place-items: center;
+  width: 50%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font: 800 3cqmin/1 var(--font-display, system-ui);
+  box-shadow:
+    0 0 0 0.35cqmin #fff,
+    0 0.6cqmin 1.6cqmin rgb(0 0 0 / 0.35);
+}
+
+.endfx__mark--crown .endfx__tag {
+  background: linear-gradient(160deg, #ffe08a, #f2a516);
+}
+
+.endfx__mark--crown svg {
+  width: 64%;
+  fill: #4a2c00;
+}
+
+.endfx__mark--half .endfx__tag {
+  background: linear-gradient(160deg, #fdfcfa, #d9d5ce);
+  color: #1c1b19;
+}
+
+.endfx--fresh .endfx__tag {
+  animation: endfx-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.75s both;
+}
+
+@keyframes endfx-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-25deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Bảng kết quả nổi giữa bàn (kiểu card). Bấm ra ngoài bảng là đóng. */
+.endfx--open {
+  pointer-events: auto;
+  animation: endfx-scrim 0.4s ease 0.85s both;
+}
+
+.endcard {
+  position: relative;
+  width: min(80%, 300px);
+  padding: clamp(14px, 5cqmin, 22px) 16px 16px;
+  border-radius: var(--panel-radius, 22px);
+  background: var(--sheet-glass, rgb(240 238 234 / 0.92));
+  -webkit-backdrop-filter: var(--glass-filter, blur(6px));
+  backdrop-filter: var(--glass-filter, blur(6px));
+  box-shadow: var(--sheet-edge, 0 20px 60px rgb(0 0 0 / 0.35));
+  text-align: center;
+  color: var(--ink);
+  animation: endcard-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.9s both;
+}
+
+.endcard--win {
+  box-shadow: var(--sheet-edge, 0 20px 60px rgb(0 0 0 / 0.35)), inset 0 3px 0 var(--led, #ff5a1f);
+}
+
+.endcard__title {
+  margin: 0;
+  font: 800 clamp(1.35rem, 7.5cqmin, 2rem) / 1.1 var(--font-display, system-ui);
+  letter-spacing: -0.01em;
+}
+
+.endcard__reason {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.endcard__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: clamp(10px, 4cqmin, 16px);
+}
+
+.endcard__actions .btn--primary {
+  flex: 1;
+}
+
+.endcard__icon {
+  flex: none;
+  width: 46px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.endcard__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.endcard__close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.endcard__close:hover {
+  background: rgb(0 0 0 / 0.06);
+  color: var(--ink);
+}
+
+.endcard__close svg {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes endcard-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes endfx-scrim {
+  0% {
+    background: transparent;
+  }
+
+  100% {
+    background: rgb(24 22 20 / 0.22);
+  }
+}
+
+@keyframes endfx-dim-soft {
+  0%,
+  100% {
+    background: transparent;
+  }
+
+  20%,
+  70% {
+    background: rgb(0 0 0 / 0.2);
+  }
+}
+
+/* Điện thoại chạy chế độ kính giả: bớt nửa số pháo giấy */
+html.lite-max .endfx__bit:nth-child(2n) {
+  display: none;
+}
+
 /* Máy bật "giảm chuyển động": chỉ huy hiệu hiện lên rồi tắt, không bay nhảy */
 @media (prefers-reduced-motion: reduce) {
   .endfx__confetti {
@@ -224,6 +470,27 @@
     animation: none;
     transform: rotate(-80deg);
   }
+
+  cg-board[data-fall-anim][data-fall='w'] piece.king.white,
+  cg-board[data-fall-anim][data-fall='b'] piece.king.black,
+  .endfx--fresh .endfx__tag {
+    animation: none;
+  }
+
+  .endcard {
+    animation-name: endfx-fade-in;
+    animation-timing-function: linear;
+  }
+}
+
+@keyframes endfx-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes endfx-fade {
@@ -236,4 +503,55 @@
   88% {
     opacity: 1;
   }
+}
+
+/* Bảng đổi kiểu, chỉ có trong bản chơi thử */
+.endfx-demo {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  z-index: 50;
+  translate: -50% 0;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  border-radius: 18px;
+  background: rgb(24 22 20 / 0.86);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  font: 600 12.5px/1 var(--font-body, system-ui);
+}
+
+.endfx-demo__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.endfx-demo__label {
+  color: #bbb;
+  padding: 0 4px;
+}
+
+.endfx-demo button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 11px;
+  font: inherit;
+  cursor: pointer;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+
+.endfx-demo .endfx-demo__pick.is-on {
+  background: var(--accent, #ff5a1f);
+  color: #1a0a03;
+}
+
+.endfx-demo .endfx-demo__try {
+  background: rgb(255 255 255 / 0.9);
+  color: #111;
 }
