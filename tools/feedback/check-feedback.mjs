@@ -8,7 +8,7 @@
 import { createServer } from 'node:http'
 
 const base = process.argv[2] ?? 'http://127.0.0.1:8787'
-const REPO = 'thanhtaiffff-dot/co-vua-gop-y'
+const REPO = 'Thanhtaiffff/co-vua-gop-y'
 
 // GitHub giả: `answer` là mã trả lời cho lần tạo Issue tới (201 là nhận).
 const issues = []
