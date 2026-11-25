@@ -10,7 +10,10 @@ import { BoardTools } from '../components/BoardTools'
 import { MoveList, MoveStrip } from '../components/MoveList'
 import { PlayerBar, type ClockFace } from '../components/PlayerBar'
 import { PromotionPicker } from '../components/PromotionPicker'
+import { EndFx } from '../components/EndFx'
+import { endFxEvent, type EndFxEvent } from '../components/endFxEvent'
 import { ResultCard } from '../components/ResultCard'
+import { resultReason } from '../components/resultReason'
 import { TopBar } from '../components/TopBar'
 import { Engine } from '../engine/stockfish'
 import { describeGame, useFeedbackGame } from '../feedback/context'
@@ -25,6 +28,7 @@ import {
   materialDiff,
   replay,
   timeoutStatus,
+  winnerOf,
   type GameResult,
   type PlayedMove,
 } from '../game/rules'
@@ -144,6 +148,19 @@ export function BotPage() {
     }
     lastKind.current = result.kind
   }, [result.kind, game])
+
+  // Hiệu ứng hết ván, bật đúng lúc ván vừa xong (mở trang khi ván đã xong thì không bật): mình thắng thì mừng, thua thì
+  // vua mình đổ. Tính ngay lúc vẽ khi thấy ván đổi trạng thái.
+  const winner = winnerOf(result)
+  const [endFx, setEndFx] = useState<EndFxEvent | null>(null)
+  const [endSeen, setEndSeen] = useState(result.kind)
+  if (endSeen !== result.kind) {
+    setEndSeen(result.kind)
+    if (endSeen === 'playing' && game) {
+      if (!winner) setEndFx(endFxEvent('draw', null))
+      else setEndFx(endFxEvent(winner === you ? 'win' : 'lose', you))
+    }
+  }
 
   // Báo sắp hết giờ (chỉ đồng hồ của người chơi).
   const lowWarned = useRef(false)
@@ -348,6 +365,17 @@ export function BotPage() {
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
             {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={() => setPromotion(null)} />}
+            <EndFx
+              event={endFx}
+              end={over ? { winner } : undefined}
+              chess={chess}
+              orientation={boardSide}
+              reviewing={review.reviewing}
+              title={!winner ? 'Hòa' : winner === you ? 'Bạn thắng!' : 'Bạn thua'}
+              reason={resultReason(result, name)}
+              onNew={start}
+              newLabel="Chơi lại"
+            />
           </div>
           <PlayerBar
             color={bottom}

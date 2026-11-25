@@ -69,11 +69,12 @@ type Props = {
   reviewing?: boolean // đang xem lại nước cũ: cất vua đổ, dấu, bảng đi
   title?: string // dòng lớn ở bảng kết quả: "Bạn thắng!", "Trắng thắng"...
   reason?: string // vì sao: "Chiếu bí", "Minh hết giờ"...
-  onNew?: () => void
+  onNew?: () => void // nút chính của bảng kết quả (chơi online: mời đấu ván nữa)
+  newLabel?: string
   onAnalyse?: () => void // không có thì bảng không có nút Phân tích
 }
 
-export function EndFx({ event, end, chess, orientation = 'white', reviewing = false, title, reason, onNew, onAnalyse }: Props) {
+export function EndFx({ event, end, chess, orientation = 'white', reviewing = false, title, reason, onNew, newLabel = 'Ván mới', onAnalyse }: Props) {
   const style = useEndStyle()
   // Hiện xong thì nhớ số thứ tự để tắt; lần hết ván sau có số mới nên hiện lại.
   const [doneId, setDoneId] = useState(0)
@@ -87,9 +88,7 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
   }, [event])
 
   // Xem lại nước cũ thì bảng kết quả coi như đã đóng, về lại không bật lên nữa.
-  useEffect(() => {
-    if (reviewing && event) setClosedId(event.id)
-  }, [reviewing, event])
+  if (reviewing && event && closedId !== event.id) setClosedId(event.id)
 
   const fresh = event && event.id !== doneId ? event : null
   const onBoard = style !== 'medal' && end && chess && !reviewing ? end : null
@@ -199,8 +198,15 @@ export function EndFx({ event, end, chess, orientation = 'white', reviewing = fa
               {reason && <p className="endcard__reason">{reason}</p>}
               <div className="endcard__actions">
                 {onNew && (
-                  <button type="button" className="btn btn--primary" onClick={onNew}>
-                    Ván mới
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => {
+                      close()
+                      onNew()
+                    }}
+                  >
+                    {newLabel}
                   </button>
                 )}
                 {onAnalyse && (
