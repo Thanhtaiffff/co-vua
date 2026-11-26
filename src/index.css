@@ -68,7 +68,7 @@ body {
   margin-inline: auto;
 }
 
-/* Tên web: vòng titan nhỏ (chỗ của logo sau này) và chữ in hoa giãn rộng */
+/* Tên web: logo vương miện (BrandMark) và chữ in hoa giãn rộng */
 .brand {
   flex: none;
   display: flex;
@@ -100,12 +100,9 @@ body {
 
 .brand__mark {
   flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, var(--bg) 0 44%, transparent 46%),
-    conic-gradient(from 200deg, #f4f6f8, #7d838c, #2a2c31, #c9cdd3, #f4f6f8);
+  display: block;
+  width: 30px;
+  height: 30px;
 }
 
 /* Công tắc Online | Một máy | Với máy: nấc đang mở nổi lên. Điện thoại: ẩn nấc đang mở, nấc Với máy chỉ còn hình robot. */
@@ -303,8 +300,8 @@ body {
   }
 
   .brand__mark {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
 
   .topbar__tools {
@@ -330,8 +327,8 @@ body {
   }
 
   .brand__mark {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
   }
 
   .topbar .icon-btn {

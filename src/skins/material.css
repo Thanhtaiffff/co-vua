@@ -81,8 +81,6 @@
   --brand-weight: 600;
   --brand-transform: uppercase;
   --brand-tracking: 0.3em;
-  --brand-mark: radial-gradient(circle, var(--bg) 0 44%, transparent 46%), conic-gradient(from 200deg, var(--ink), var(--muted), var(--ink));
-  --brand-mark-radius: 50%;
 
   /* Cột nước đi, ảnh đại diện, bong bóng chữ */
   --move-hover: var(--surface-2);
@@ -117,11 +115,6 @@ textarea,
   font-weight: var(--brand-weight);
   text-transform: var(--brand-transform);
   letter-spacing: var(--brand-tracking);
-}
-
-.brand__mark {
-  border-radius: var(--brand-mark-radius);
-  background: var(--brand-mark);
 }
 
 .card__title,
