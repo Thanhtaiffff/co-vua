@@ -302,7 +302,7 @@
   }
 }
 
-/* Điện thoại chạy chế độ kính giả: bớt nửa số pháo giấy */
+/* Điện thoại chạy giao diện Nhẹ: bớt nửa số pháo giấy */
 html.lite-max .endfx__bit:nth-child(2n) {
   display: none;
 }

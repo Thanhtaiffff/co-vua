@@ -1,0 +1,131 @@
+/* Giao diện Nhẹ (Tài chọn 2026-11-26): kiểu "Bê tông" gốc, số 7 trong 10 kiểu đưa ra hôm 2026-11-20, trước khi chốt Bê
+   tông kính. Thô và thẳng: xám bê tông, khung đặc, viền đen dày, góc vuông, bóng đổ cứng không mờ, cam công trường, chữ
+   đen đậm in hoa. Không có kính, không có bóng mờ nên máy vẽ rất nhẹ. lite.ts gắn lớp lite-max lên <html> khi người chơi
+   chọn Nhẹ, hoặc khi để Tự động mà máy giật. Đặt trên html.lite-max để đè lên biến của be-tong-kinh.css. */
+html.lite-max {
+  --bg: #dcdcd7;
+  --surface: #f2f2ee;
+  --surface-2: #e6e6e1;
+  --surface-3: #d0d0ca;
+  --ink: #0d0d0d;
+  --muted: #55554f;
+  --line: #0d0d0d;
+  --accent: #ff5a1f;
+  --accent-ink: #0d0d0d;
+  --accent-soft: #ffd9c9;
+  --led: #ff5a1f;
+  --danger: #d0021b;
+  --danger-strong: #d0021b;
+  --scrim: rgb(13 13 13 / 0.45);
+  --shadow: 6px 6px 0 #0d0d0d;
+  --font-display: 'Archivo', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: light;
+
+  --page-bg:
+    radial-gradient(rgb(0 0 0 / 0.07) 1px, transparent 1.6px) 0 0 / 6px 6px,
+    radial-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1.6px) 3px 3px / 7px 7px, #dcdcd7;
+  --panel: #f2f2ee;
+  --panel-edge: 0 0 0 2px #0d0d0d, 6px 6px 0 #0d0d0d;
+  --panel-radius: 0;
+  --btn: #f2f2ee;
+  --btn-hover: #ffffff;
+  --btn-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --btn-radius: 0;
+  --btn-font: var(--font-display);
+  --btn-weight: 800;
+  --btn-transform: uppercase;
+  --btn-tracking: 0.02em;
+  --btn-press: translate(3px, 3px);
+  --primary: #ff5a1f;
+  --primary-hover: #ff7340;
+  --primary-ink: #0d0d0d;
+  --primary-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --chip: #f2f2ee;
+  --chip-hover: #ffffff;
+  --chip-edge: 0 0 0 2px #0d0d0d;
+  --chip-radius: 0;
+  --pick-on: #ffffff;
+  --pick-on-edge: 0 0 0 2px #0d0d0d, 4px 4px 0 #ff5a1f;
+  --well: #ffffff;
+  --well-edge: inset 0 0 0 2px #0d0d0d;
+  --field-radius: 0;
+  --signal-ring: 0 0 0 3px #ff5a1f;
+  --danger-edge: 0 0 0 2px #0d0d0d, 3px 3px 0 #0d0d0d;
+  --sheet-edge: 0 0 0 2px #0d0d0d, 10px 10px 0 #0d0d0d;
+  --backdrop: rgb(13 13 13 / 0.4);
+  --tray: 10px;
+  --tray-bg: #0d0d0d;
+  --tray-edge: none;
+  --tray-radius: 0;
+  --tray-shadow: 10px 10px 0 #ff5a1f;
+  --board-radius: 0;
+  --clock-font: var(--font-mono);
+  --clock-weight: 600;
+  --clock-radius: 0;
+  --clock-idle: 0.65;
+  --clock-w: #ffffff;
+  --clock-w-ink: #0d0d0d;
+  --clock-w-edge: 0 0 0 2px #0d0d0d;
+  --clock-b: #0d0d0d;
+  --clock-b-ink: #ffffff;
+  --clock-b-edge: 0 0 0 2px #0d0d0d;
+  --heading-weight: 900;
+  --heading-transform: uppercase;
+  --heading-tracking: -0.01em;
+  --brand-weight: 900;
+  --brand-tracking: 0.02em;
+  --move-hover: #e6e6e1;
+  --move-on: #0d0d0d;
+  --move-on-ink: #ffffff;
+  --avatar-ring: 0 0 0 2px #0d0d0d;
+  --tip: #0d0d0d;
+  --tip-ink: #ffffff;
+  --crown: #ff5a1f;
+  --font-num: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --sheet-glass: #f2f2ee;
+  --solid-panel: #f2f2ee;
+}
+
+html.lite-max .brand {
+  font-size: 1.35rem;
+  font-stretch: 112%;
+}
+
+html.lite-max .brand__mark {
+  filter: none;
+}
+
+html.lite-max .avatar {
+  border-radius: 0;
+}
+
+/* Các nút, ô chọn có bo tròn riêng (không lấy từ biến) cũng vuông theo, cho đồng bộ với khung góc vuông. */
+html.lite-max
+  :is(
+    .icon-btn,
+    .mode,
+    .mode__link,
+    .seg,
+    .seg button,
+    .theme-chip,
+    .theme-panel,
+    .sound-sheet,
+    .sound-item,
+    .act,
+    .bot-level,
+    .bot-time__summary,
+    .chat,
+    .chat__toggle,
+    .chat__chip,
+    .chat__input,
+    .chat__send,
+    .chat__emoji-btn,
+    .card,
+    .scorecard,
+    .offer,
+    [data-tip]::after
+  ) {
+  border-radius: 0 !important;
+}
