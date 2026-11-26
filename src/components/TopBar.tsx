@@ -11,6 +11,7 @@ import { loadSaved, save } from '../storage'
 import { useTheme } from '../theme'
 import { pieceSetInfo, type PieceSetId } from '../themeCatalog'
 import { AboutButton, AboutSheet } from './AboutSheet'
+import { BrandMark } from './BrandMark'
 import { SoundSetPicker, type SoundMode } from './SoundSetPicker'
 import { SoundToggle } from './SoundToggle'
 import { ThemePicker } from './ThemePicker'
@@ -98,7 +99,7 @@ export function TopBar({ mode }: Props) {
 
   return (
     <header className="topbar">
-      {/* Bấm tên web là về trang đầu (chơi chung một máy) */}
+      {/* Bấm logo hoặc tên web là về trang đầu (chơi chung một máy) */}
       <h1 className="brand">
         <a
           className="brand__link"
@@ -109,7 +110,7 @@ export function TopBar({ mode }: Props) {
             navigate('/')
           }}
         >
-          <span className="brand__mark" aria-hidden="true" />
+          <BrandMark />
           <span className="brand__word">Cờ vua</span>
         </a>
       </h1>
