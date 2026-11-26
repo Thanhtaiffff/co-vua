@@ -32,6 +32,7 @@ export const SOUND_GROUPS: SoundGroup[] = [
       { id: 'stone-table', name: 'Bàn đá', about: '"Cộc" đục, chắc, trầm.' },
     ],
   },
+  { name: 'Bê tông', sets: [{ id: 'concrete', name: 'Khối bê tông', about: 'Khối bê tông đặc đặt xuống sàn: "thịch" trầm, khô, sạn lạo xạo.' }] },
   {
     name: 'Trống',
     sets: [

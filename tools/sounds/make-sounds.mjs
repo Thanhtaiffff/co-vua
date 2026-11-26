@@ -1,6 +1,6 @@
 // Tạo các file âm thanh (MP3) cho bàn cờ, ghi vào src/sounds/<tên bộ>/.
 // Các bộ Gỗ, Kim loại (Thép, Đồng, Gang) và Thủy tinh (Pha lê, Bi ve, Kính dày) là tiếng thu thật của Kenney
-// (CC0, trong tools/sounds/kenney/). Các bộ Đá (Cẩm thạch, Sỏi, Bàn đá), Trống, Bass, 8-bit và Bong bóng do chính
+// (CC0, trong tools/sounds/kenney/). Các bộ Đá (Cẩm thạch, Sỏi, Bàn đá), Bê tông, Trống, Bass, 8-bit và Bong bóng do chính
 // file này tự tạo bằng toán; riêng Bàn đá lót thêm tiếng chạm nền xi măng của Kenney. Muốn sửa tiếng thì sửa số ở
 // đây rồi chạy lại.
 // Mỗi bộ chỉ có tiếng của đúng chất liệu, nhạc cụ đó (không chen chuông hay nhạc cụ khác), riêng 8-bit là tiếng máy
@@ -584,6 +584,41 @@ const pane = (name, seconds, rate) => take(name, seconds, rate, 150)
 // Tiếng gõ thật có đỉnh nhọn lúc chạm: nén bớt cho mọi tiếng của bộ đạt đủ mức to (xem softenPeak).
 const soften = (sounds) => Object.fromEntries(Object.entries(sounds).map(([event, sound]) => [event, softenPeak(sound, LEVEL[event])]))
 
+// ---------- Bê tông ----------
+
+// Đưa đỉnh tiếng về 1, để khi trộn nhiều lớp thì số `gain` là độ to thật của từng lớp so với nhau.
+function norm(x) {
+  let peak = 0
+  for (const v of x) peak = Math.max(peak, Math.abs(v))
+  return peak ? x.map((v) => v / peak) : x
+}
+
+// Sạn: những hạt cát, xi măng vụn lạo xạo dưới đáy khối bê tông. `count` cú lách tách rất ngắn, dày ở đầu rồi thưa
+// dần trong `seconds` giây, lọc giữ dải `lo`..`hi` Hz.
+function grit({ seconds = 0.05, count = 40, lo = 2200, hi = 8000, seed = 1 }) {
+  const rand = random(seed)
+  const x = samples(seconds + 0.01)
+  for (let k = 0; k < count; k++) {
+    const at = Math.round(seconds * rand() ** 2.2 * SR)
+    const amp = (0.3 + 0.7 * rand()) * (1 - at / (seconds * SR)) * (rand() < 0.5 ? -1 : 1)
+    const n = 2 + Math.round(rand() * 10)
+    for (let i = 0; i < n && at + i < x.length; i++) x[at + i] += amp * (rand() * 2 - 1) * (1 - i / n)
+  }
+  return norm(filter(filter(x, 'highpass', lo), 'lowpass', hi))
+}
+
+// Cú "thịch" trầm của khối nặng chạm sàn: sóng sin trùng từ `from` xuống `to` Hz, tắt sau `decay` giây.
+function thump({ from = 160, to = 75, decay = 0.035, seconds = 0.14 }) {
+  const x = samples(seconds)
+  let phase = 0
+  for (let i = 0; i < x.length; i++) {
+    const t = i / SR
+    phase += (2 * Math.PI * (to + (from - to) * Math.exp(-t / 0.012))) / SR
+    x[i] = Math.sin(phase) * Math.exp(-t / decay) * Math.min(1, i / (0.0006 * SR))
+  }
+  return fadeOut(x, 0.02)
+}
+
 // ---------- Các bộ tiếng ----------
 
 // Mức to cho từng loại tiếng (dB): ăn quân to hơn đi thường một chút; tiếng báo (chiếu, hết ván...) nổi hơn tiếng đi quân
@@ -1101,6 +1136,38 @@ const SETS = {
       // Vua đá đổ "cộc", bập bênh lại một lần rồi nằm im.
       end: seq([hard, 0, 1], [place2, 0.17, 0.4], [tock, 0.29, 0.18]),
       draw: seq([block(12, 0.95), 0, 0.85], [block(13, 0.95, 1), 0.26, 0.85]),
+      lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
+      start: seq([land, 0, 0.6], [tick, 0.07, 0.45], [tock, 0.15, 0.7], [place2, 0.21, 0.5], [clack, 0.3, 0.4], [place, 0.37, 0.85]),
+    })
+  },
+
+  // ----- Bê tông (hợp giao diện Nhẹ "Bê tông gốc") -----
+
+  // Khối bê tông: quân là khối bê tông đặc, nặng, đặt xuống sàn bê tông. "Thịch" đục, trầm, gần như không ngân,
+  // kèm tiếng sạn lạo xạo dưới đáy. Trầm và khô hơn Bàn đá, không có tiếng "cộc" sáng của đá mài.
+  concrete() {
+    const block = (seed, pitch = 1, weight = 1) =>
+      mix(
+        { sound: norm(stoneHit({ seed, low: 380 * pitch, high: 5500, damp: 0.04, tilt: 0.75, contact: 0.001, grit: 0, seconds: 0.09 })) },
+        { sound: thump({ from: 150 * pitch, to: 80 * pitch, decay: 0.03 }), gain: 0.4 * weight },
+        { sound: grit({ seconds: 0.045, count: 34, seed: seed + 40 }), gain: 0.3 },
+      )
+    const place = block(1)
+    const place2 = block(2, 0.95)
+    const clack = block(3, 1.1, 0.8)
+    const land = block(4, 0.9, 1.2)
+    const tick = block(5, 1.15, 0.6)
+    const tock = block(6, 0.88, 0.6)
+    const hard = mix({ sound: block(7, 0.85, 1.4) }, { sound: block(8, 0.78, 1.2), gain: 0.7 }, { sound: grit({ seconds: 0.12, count: 90, seed: 9 }), gain: 0.3 })
+    return soften({
+      move: place,
+      capture: seq([clack, 0, 1], [land, 0.028, 0.9]),
+      castle: seq([place, 0, 1], [place2, 0.14, 0.85]),
+      check: seq([clack, 0.09, 1], [block(9, 1.12, 0.7), 0.16, 0.8]),
+      promote: seq([block(10, 0.86), 0.08, 0.9], [block(11, 1.18, 0.7), 0.2, 1]),
+      // Vua bê tông đổ "thịch", bụi sạn rơi lạo xạo.
+      end: seq([hard, 0, 1], [place2, 0.19, 0.35], [grit({ seconds: 0.25, count: 70, seed: 21 }), 0.2, 0.18]),
+      draw: seq([block(12, 0.95), 0, 0.85], [block(13, 0.95), 0.26, 0.85]),
       lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
       start: seq([land, 0, 0.6], [tick, 0.07, 0.45], [tock, 0.15, 0.7], [place2, 0.21, 0.5], [clack, 0.3, 0.4], [place, 0.37, 0.85]),
     })

@@ -15,6 +15,7 @@ export const SOUND_SETS = [
   'polished-stone',
   'pebbles',
   'stone-table',
+  'concrete',
   'hand-drum',
   'festival-drum',
   'bass-drum',

@@ -361,6 +361,50 @@ const THEMES = {
     c *= 1.0 - groove * 0.3;
     return c;
   }`,
+  concrete: /* glsl */ `
+  
+  // Mặt bê tông: loang xi măng, hạt cát, lỗ rỗ bọt khí. base: màu nền, k: độ thô.
+  vec3 concrete(vec2 p, vec3 base, float k, float s) {
+    float cloud = fbm(vec3(p * 0.55, s)) * 0.5 + 0.5;
+    float mid = snoise(vec3(p * 2.6, s + 3.0));
+    vec3 c = base * (0.86 + 0.2 * cloud + 0.04 * mid);
+    float s1 = snoise(vec3(p * 60.0, s + 9.0));
+    float s2 = snoise(vec3(p * 95.0, s + 1.0));
+    c *= 1.0 + k * s1 * 0.05;
+    c = mix(c, base * 1.18, smoothstep(0.55, 0.9, s2) * k * 0.35);
+    float pore = 0.0;
+    for (int i = 0; i < 2; i++) {
+      vec2 g = p * (i == 0 ? 9.0 : 17.0) + float(i) * 7.3;
+      vec2 cell = floor(g);
+      vec2 r = fract(g) - 0.5 - (hash22(cell + s) - 0.5) * 0.55;
+      float rad = (i == 0 ? 0.16 : 0.12) * (0.4 + 0.8 * hash12(cell + 3.0));
+      float keep = step(1.0 - 0.14 * k, hash12(cell + 9.0));
+      pore = max(pore, keep * smoothstep(rad, rad * 0.5, length(r)));
+    }
+    return c * (1.0 - pore * 0.35);
+  }
+
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Bê tông trần cốp pha (kiểu nhà Tadao Ando): mỗi ô là một tấm đổ khuôn, mặt mịn loang mây, mạch ghép mảnh,
+    // lỗ ty giằng cốp pha tròn ở mỗi góc giao bốn ô.
+    vec3 base = dark ? vec3(0.5, 0.505, 0.51) : vec3(0.79, 0.785, 0.765);
+    vec3 c = concrete(p + sq * 2.3, base, 0.35, s);
+    float tone = hash12(sq + s * 3.0);
+    c *= 0.96 + 0.08 * tone;
+    vec2 e = min(lp, 1.0 - lp);
+    float joint = 1.0 - smoothstep(0.0, 0.006, min(e.x, e.y));
+    c *= 1.0 - joint * 0.3;
+    // Lỗ ty ở góc giao (bỏ các góc nằm trên mép bàn).
+    vec2 corner = floor(p + 0.5);
+    vec2 d = p - corner;
+    float inner = step(0.5, corner.x) * step(corner.x, 7.5) * step(0.5, corner.y) * step(corner.y, 7.5);
+    float r = length(d);
+    float hole = smoothstep(0.075, 0.06, r);
+    float lip = smoothstep(0.1, 0.075, r) - hole;
+    c *= 1.0 - inner * (hole * 0.6 + lip * 0.12);
+    c += inner * hole * smoothstep(0.06, 0.0, length(d + vec2(0.02, 0.02))) * 0.06;
+    return c;
+  }`,
   bubble: /* glsl */ `
   vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
     // Mặt nước: ô sáng xanh nhạt, ô tối xanh biển, ánh sóng (caustics) và vài bọt khí nhỏ.

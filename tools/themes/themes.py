@@ -110,6 +110,18 @@ THEMES = {
               'uniforms': {'uColA': '#37383a', 'uColB': '#121212', 'uColC': '#9b9995', 'uScale': 90.0, 'uDark': 0.3, 'uLight': 0.55, 'uSeed': 6.0}},
         'exposure': 1.1,
     },
+    # Bê tông (hợp giao diện Nhẹ "Bê tông gốc"): bê tông đúc để trần, nhám, nhiều lỗ rỗ bọt khí. Quân 2D viền đen
+    # tuyền, bóng đổ cứng như khung giao diện.
+    'concrete': {
+        'name': 'Bê tông',
+        'w': {'pattern': 'concrete', 'roughness': 0.88, 'bump': 0.0016,
+              'uniforms': {'uColA': '#bcbbb5', 'uColB': '#9a9994', 'uColC': '#d4d3cd', 'uScale': 30.0, 'uPores': 0.45, 'uPoreSize': 0.22, 'uSand': 1.0, 'uCloud': 0.8, 'uSeed': 2.0}},
+        'b': {'pattern': 'concrete', 'roughness': 0.85, 'bump': 0.0016,
+              'uniforms': {'uColA': '#4e5053', 'uColB': '#3a3c3f', 'uColC': '#6a6c6f', 'uScale': 30.0, 'uPores': 0.45, 'uPoreSize': 0.22, 'uSand': 1.0, 'uCloud': 0.8, 'uSeed': 7.0}},
+        'exposure': 1.0,
+        'flatInk': {'w': {'ink': '#0d0d0d', 'dark': 1.0, 'hard': 0.03, 'shadow': 0.3},
+                    'b': {'ink': '#0d0d0d', 'dark': 1.0, 'hard': 0.03, 'shadow': 0.3, 'light': 0.5}},
+    },
     'bubble': {
         'name': 'Bong bóng',
         'w': {'glass': True, 'ior': 1.33, 'roughness': 0.02, 'refrRoughness': 0.03, 'tint': '#eef2ff', 'density': 0.6,

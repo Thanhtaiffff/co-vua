@@ -783,6 +783,14 @@ body:has(.sound-sheet[open]) {
     linear-gradient(160deg, #8e9293, #5c6163);
 }
 
+/* Khối bê tông: xám xi măng lốm đốm lỗ rỗ, mạch ghép và lỗ ty như tấm cốp pha */
+.swatch--concrete {
+  background:
+    radial-gradient(circle at 50% 50%, #3d3e40 0 2px, transparent 2.5px) 0 0 / 50% 50%,
+    radial-gradient(rgb(0 0 0 / 0.25) 0.8px, transparent 1.3px) 1px 2px / 5px 6px,
+    linear-gradient(160deg, #c9c8c3, #9c9b96);
+}
+
 /* Trống tay: cặp bongo mặt to trên nền gỗ sẫm */
 .swatch--hand-drum {
   background:
