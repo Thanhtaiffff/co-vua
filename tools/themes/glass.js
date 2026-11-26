@@ -94,6 +94,8 @@ uniform float uIridRim;
 uniform float uSwirlFlat;
 uniform float uFacet;
 uniform float uFacetScale;
+uniform float uFire;
+uniform float uSparkle;
 varying vec3 vWN;
 varying vec3 vWP;
 varying vec3 vObj;
@@ -102,6 +104,13 @@ varying vec3 vObj;
 ${NOISE}
 
 vec3 env(vec3 d, float r) { return textureCubeUV(envMap, d, r).rgb; }
+
+vec3 fireRay(vec3 V, vec3 N, vec3 Nb, float ior) {
+  vec3 a1 = refract(-V, N, 1.0 / ior);
+  vec3 a2 = refract(a1, -Nb, ior);
+  if (dot(a2, a2) < 0.01) a2 = reflect(a1, -Nb);
+  return normalize(a2);
+}
 
 // Mặt cắt kiểu pha lê: mỗi ô Voronoi là một mặt phẳng nghiêng ngẫu nhiên.
 vec3 facetTilt(vec2 p) {
@@ -163,6 +172,14 @@ void main() {
   vec3 T2 = refract(T1, -Nb, uIor);
   if (dot(T2, T2) < 0.01) T2 = reflect(T1, -Nb);
   vec3 refr = env(normalize(T2), uRefrRough) * uRefrBoost;
+  // "Lửa" của kim cương (tán sắc): ánh đỏ, lục, lam uốn lệch nhau một chút nên chỗ giáp sáng tối có viền cầu vồng.
+  if (uFire > 0.0) {
+    vec3 rgb = vec3(0.0);
+    rgb.r = env(fireRay(V, N, Nb, uIor - uFire), uRefrRough).r;
+    rgb.g = env(fireRay(V, N, Nb, uIor), uRefrRough).g;
+    rgb.b = env(fireRay(V, N, Nb, uIor + uFire), uRefrRough).b;
+    refr = rgb * uRefrBoost;
+  }
 
   // Độ dày ước lượng: sát viền dày hơn (ánh sáng đi xiên qua nhiều thủy tinh hơn).
   float thick = uDensity * (0.45 + 1.4 * pow(1.0 - NdV, 1.6));
@@ -201,6 +218,15 @@ void main() {
     float k = acc * uSwirl;
     color = mix(color, rib * irr * (1.0 - F) + F * refl, k);
     alphaT *= 1.0 - k;
+  }
+  // Chớp sáng nhiều màu trên từng mặt giác (kim cương): mặt nào hướng gần về đèn thì loé một màu cầu vồng.
+  if (uSparkle > 0.0) {
+    vec3 L = normalize(vec3(-0.55, 0.62, 0.55));
+    vec3 Rf = reflect(-V, N);
+    float g = pow(max(dot(Rf, L), 0.0), 18.0) + 0.6 * pow(max(dot(T2 * vec3(1.0, 1.0, -1.0), L), 0.0), 24.0);
+    vec3 hv = facetTilt((uSwirlFlat > 0.5 ? vObj.xy : vObj.xz + vObj.y) * uFacetScale) * 0.5 + 0.5;
+    vec3 hue = 0.5 + 0.5 * cos(6.2831853 * (hv.x + vec3(0.0, 0.33, 0.67)));
+    color += uSparkle * g * mix(vec3(1.0), hue * 1.3, 0.45);
   }
   gl_FragColor = vec4(color, 1.0 - alphaT);
 }
@@ -250,6 +276,8 @@ export function makeGlass(spec, envTexture, viewDir) {
       uSwirlFlat: { value: spec.swirlFlat ?? 0 },
       uFacet: { value: spec.facet ?? 0 },
       uFacetScale: { value: spec.facetScale ?? 14 },
+      uFire: { value: spec.fire ?? 0 },
+      uSparkle: { value: spec.sparkle ?? 0 },
     },
     transparent: true,
     depthWrite: true,

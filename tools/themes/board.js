@@ -381,6 +381,150 @@ const THEMES = {
     c += keep * (ring * 0.25 + glint * 0.35);
     return c;
   }`,
+  gold: /* glsl */ `
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Vàng – ngà: ô sáng ngà voi kem có thớ mịn, ô tối vàng mài xước (vân mảnh chạy một chiều, ánh sáng loang chéo);
+    // giữa các ô là chỉ vàng mảnh khảm.
+    vec2 off = hash22(sq + s) * 40.0;
+    vec3 c;
+    if (dark) {
+      vec2 q = mod(sq.x, 2.0) > 0.5 ? lp : vec2(lp.y, lp.x);
+      float st = snoise(vec3(q.x * 1.6 + off.x, q.y * 260.0, s)) * 0.55 + snoise(vec3(q.x * 5.0 + off.y, q.y * 700.0, s + 2.0)) * 0.3;
+      float sheen = 0.5 + 0.5 * sin((p.x - p.y) * 0.5 + 0.6);
+      vec3 base = vec3(0.74, 0.56, 0.22);
+      c = base * (0.82 + 0.26 * sheen) + st * 0.045;
+      vec2 bv = bevel(lp, 0.025);
+      c += bv.y * 0.08;
+    } else {
+      float grain = snoise(vec3(lp.x * 2.0 + off.x, lp.y * 30.0, s + 3.0)) * 0.5 + 0.5;
+      float cloud = fbm(vec3(p * 0.9, s + 1.0)) * 0.5 + 0.5;
+      c = vec3(0.95, 0.91, 0.82) * (0.95 + 0.05 * cloud) - grain * vec3(0.02, 0.025, 0.035);
+    }
+    vec2 e2 = min(lp, 1.0 - lp);
+    float e = min(e2.x, e2.y);
+    float inlay = 1.0 - smoothstep(0.006, 0.012, e);
+    vec3 gl = vec3(0.86, 0.68, 0.3) * (0.85 + 0.3 * (0.5 + 0.5 * sin((p.x + p.y) * 2.0)));
+    c = mix(c, gl, inlay);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.003, e)) * 0.35;
+    return c;
+  }`,
+  'gold-leaf': /* glsl */ `
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Sơn mài vàng lá: ô sáng dát vàng lá (từng mảnh vuông nhỏ, mép mảnh chồng lên nhau, nếp nhăn lấp lánh),
+    // ô tối sơn mài đỏ son sâu bóng, có ánh phản chiếu.
+    vec3 c;
+    if (dark) {
+      float deep = fbm(vec3(p * 0.8, s + 2.0)) * 0.5 + 0.5;
+      c = mix(vec3(0.46, 0.09, 0.06), vec3(0.3, 0.05, 0.035), deep * 0.7);
+      float band = smoothstep(0.3, 0.0, abs(fract((p.x + p.y) * 0.08 + 0.1) - 0.5) - 0.18);
+      c += band * vec3(0.08, 0.04, 0.03);
+    } else {
+      // Mảnh vàng lá: lưới 3 x 3 mảnh mỗi ô, lệch nhẹ.
+      vec2 lq = lp * 3.0 + (hash22(sq + s) - 0.5) * 0.3;
+      vec2 cell = floor(lq);
+      vec2 cf = fract(lq);
+      float tone = hash12(cell + sq * 7.0 + s);
+      float crinkle = snoise(vec3(p * 38.0, s + 5.0)) * 0.6 + snoise(vec3(p * 90.0, s + 6.0)) * 0.4;
+      vec3 leaf = vec3(0.93, 0.77, 0.42) * (0.94 + 0.07 * tone) + crinkle * 0.04;
+      float sheen = 0.5 + 0.5 * sin((p.x - p.y) * 0.6 + 2.0);
+      leaf *= 0.9 + 0.14 * sheen;
+      float edge = 1.0 - smoothstep(0.0, 0.03, min(min(cf.x, cf.y), min(1.0 - cf.x, 1.0 - cf.y)));
+      c = leaf * (1.0 - edge * 0.06) + edge * 0.02;
+      // Chỗ vàng lá sứt lộ lớp sơn đỏ bên dưới.
+      float chip = smoothstep(0.78, 0.86, fbm(vec3(p * 3.0, s + 9.0)) * 0.5 + 0.5);
+      c = mix(c, vec3(0.5, 0.14, 0.08), chip * 0.7);
+    }
+    vec2 bv = bevel(lp, 0.02);
+    c += bv.y * 0.06;
+    vec2 e2 = min(lp, 1.0 - lp);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.005, min(e2.x, e2.y))) * 0.4;
+    return c;
+  }`,
+  diamond: /* glsl */ `
+  // Mặt giác: ô Voronoi, mỗi mặt một độ sáng; trả về (độ sáng, mã mặt).
+  vec2 facet(vec2 x) {
+    vec2 g = floor(x), f = fract(x);
+    float best = 9.0; vec2 id = vec2(0.0);
+    for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+      vec2 o = vec2(float(i), float(j));
+      vec2 r = o + hash22(g + o) - f;
+      float d = dot(r, r);
+      if (d < best) { best = d; id = g + o; }
+    }
+    return vec2(hash12(id), hash12(id + 7.3));
+  }
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Kim cương trên nhung: ô sáng là tấm pha lê mài giác (mặt sáng tối xen nhau, loé cầu vồng ở vài mặt),
+    // ô tối nhung xám xanh mịn rắc bụi kim cương lấp lánh.
+    vec3 c;
+    if (dark) {
+      float nap = snoise(vec3(p * 140.0, s)) * 0.5 + 0.5;
+      float fold = fbm(vec3(p * 0.7, s + 3.0)) * 0.5 + 0.5;
+      c = vec3(0.25, 0.28, 0.35) * (0.86 + 0.18 * fold) * (0.95 + 0.08 * nap);
+      vec2 dq = p * 26.0;
+      vec2 dc = floor(dq);
+      float h = hash12(dc + s);
+      float d = length(fract(dq) - 0.5 - (hash22(dc) - 0.5) * 0.5);
+      float spark = step(0.93, h) * (1.0 - smoothstep(0.0, 0.12, d));
+      vec3 hue = 0.6 + 0.4 * cos(6.2831853 * (hash12(dc + 3.0) + vec3(0.0, 0.33, 0.67)));
+      c += spark * mix(vec3(1.0), hue, 0.5) * 0.7;
+    } else {
+      vec2 f = facet(lp * 4.0 + hash22(sq + s) * 10.0);
+      float tone = 0.8 + 0.2 * f.x;
+      c = vec3(0.9, 0.92, 0.95) * tone;
+      float glint = step(0.9, f.y);
+      vec3 hue = 0.75 + 0.25 * cos(6.2831853 * (f.x * 3.0 + vec3(0.0, 0.33, 0.67)));
+      c = mix(c, hue * 1.05, glint * 0.3);
+      float band = smoothstep(0.3, 0.0, abs(fract((p.x + p.y) * 0.08 + 0.15) - 0.5) - 0.2);
+      c += band * 0.04;
+    }
+    vec2 bv = bevel(lp, 0.035);
+    c += bv.y * (dark ? 0.06 : 0.14);
+    vec2 e2 = min(lp, 1.0 - lp);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.005, min(e2.x, e2.y))) * 0.35;
+    return c;
+  }`,
+  'diamond-platinum': /* glsl */ `
+  // Một viên kim cương nhỏ đính ở góc ô (kiểu nhẫn đính hạt): trả về (màu, độ che).
+  vec4 gem(vec2 lp, vec2 sq) {
+    vec2 rc = vec2(lp.x < 0.5 ? 0.0 : 1.0, lp.y < 0.5 ? 0.0 : 1.0);
+    vec2 dv = lp - rc;
+    float r = 0.085;
+    float d = length(dv) / r;
+    float cover = 1.0 - smoothstep(0.85, 1.0, d);
+    // Mặt giác hình sao 8 cánh quanh tâm viên đá.
+    float a = atan(dv.y, dv.x);
+    float seg = floor((a + 3.14159) / 0.7854);
+    float k = hash12(vec2(seg, dot(rc + sq, vec2(1.0, 7.0))));
+    vec3 col = vec3(0.75 + 0.25 * k);
+    col *= d < 0.45 ? 1.1 : 0.85 + 0.3 * k;
+    vec3 hue = 0.65 + 0.35 * cos(6.2831853 * (k * 2.0 + vec3(0.0, 0.33, 0.67)));
+    col = mix(col, hue, step(0.8, k) * 0.5);
+    // Vành bạch kim ôm viên đá.
+    float prong = smoothstep(0.82, 0.92, d) * (1.0 - smoothstep(1.0, 1.15, d));
+    col = mix(col, vec3(0.6, 0.61, 0.64), prong);
+    return vec4(col, 1.0 - smoothstep(1.05, 1.2, d));
+  }
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Bạch kim đính kim cương: ô sáng bạch kim mài mịn, ô tối than chì bóng; mỗi góc giao bốn ô đính một viên kim cương.
+    vec2 q = dark ? vec2(lp.y, lp.x) : lp;
+    vec2 off = hash22(sq + s) * 50.0;
+    float st = snoise(vec3(q.x * 1.5 + off.x, q.y * 300.0, s)) * 0.5 + snoise(vec3(q.x * 6.0 + off.y, q.y * 800.0, s + 2.0)) * 0.3;
+    vec3 base = dark ? vec3(0.27, 0.28, 0.31) : vec3(0.83, 0.84, 0.86);
+    float sheen = 0.5 + 0.5 * sin((p.x - p.y) * 0.55 + 1.0);
+    vec3 c = base * (0.9 + 0.14 * sheen) + st * (dark ? 0.02 : 0.03);
+    vec2 bv = bevel(lp, 0.025);
+    c += bv.y * 0.08;
+    vec2 e2 = min(lp, 1.0 - lp);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.005, min(e2.x, e2.y))) * 0.4;
+    // Viên ở mép ngoài bàn bỏ đi (chỉ đính ở góc giao bên trong).
+    vec2 corner = sq + vec2(lp.x < 0.5 ? 0.0 : 1.0, lp.y < 0.5 ? 0.0 : 1.0);
+    if (corner.x > 0.5 && corner.x < 7.5 && corner.y > 0.5 && corner.y < 7.5) {
+      vec4 g = gem(lp, corner);
+      c = mix(c, g.rgb, g.a);
+    }
+    return c;
+  }`
 }
 
 const VERT = /* glsl */ `#version 300 es

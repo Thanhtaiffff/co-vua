@@ -584,6 +584,53 @@ const pane = (name, seconds, rate) => take(name, seconds, rate, 150)
 // Tiếng gõ thật có đỉnh nhọn lúc chạm: nén bớt cho mọi tiếng của bộ đạt đủ mức to (xem softenPeak).
 const soften = (sounds) => Object.fromEntries(Object.entries(sounds).map(([event, sound]) => [event, softenPeak(sound, LEVEL[event])]))
 
+// Đưa đỉnh tiếng về 1, để khi trộn nhiều lớp thì số `gain` chính là tỉ lệ to nhỏ giữa các lớp (stoneHit, modal ra
+// biên độ rất khác nhau tùy số tần số riêng).
+function toUnit(x) {
+  let peak = 0
+  for (const v of x) peak = Math.max(peak, Math.abs(v))
+  return peak > 0 ? x.map((v) => v / peak) : x
+}
+
+// Vật kim loại hay đá quý rung ở vài tần số riêng rõ rệt (không dày đặc như đá): `modes` = [bội số của `f`, độ to,
+// thời gian tắt (giây)]. Cú chạm cứng và nhanh (`contact` giây) làm chúng cùng rung; `click`: tiếng "tách" lúc chạm.
+// Mỗi `seed` lệch tần số một chút (`jitter`), như hai đồng xu không bao giờ kêu giống hệt nhau.
+function modal({ f, modes, contact = 0.0003, seed = 1, seconds = 0.4, jitter = 0.015, click = 0.15, clickTone = 5000, damp = 1 }) {
+  const rand = random(seed)
+  const n = Math.max(3, Math.round(contact * SR))
+  const x = samples(seconds)
+  for (const [ratio, amp, decay0] of modes) {
+    const fr = f * ratio * (1 - jitter + 2 * jitter * rand())
+    if (fr > SR / 2.2) continue
+    const decay = decay0 * damp * (0.85 + 0.3 * rand())
+    const r = Math.exp(-1 / (decay * SR))
+    const w = (2 * Math.PI * fr) / SR
+    const a1 = -2 * r * Math.cos(w)
+    const a2 = r * r
+    const g = amp * (0.8 + 0.4 * rand())
+    let y1 = 0
+    let y2 = 0
+    const end = Math.min(x.length, Math.round(decay * 7 * SR) + n)
+    for (let i = 0; i < end; i++) {
+      const y = (i < n ? Math.sin((Math.PI * (i + 0.5)) / n) : 0) - a1 * y1 - a2 * y2
+      y2 = y1
+      y1 = y
+      x[i] += g * y * Math.sin(w)
+    }
+  }
+  const peak = x.reduce((m, v) => Math.max(m, Math.abs(v)), 0) || 1
+  if (click) {
+    const c = filter(noise(0.006, 0.0009, seed + 99), 'bandpass', clickTone, { q: 0.9 })
+    for (let i = 0; i < c.length; i++) x[i] += click * peak * 3 * c[i]
+  }
+  return fadeOut(filter(x, 'highpass', 90), 0.01)
+}
+
+// Tần số riêng: thanh kim loại đặc (thỏi vàng), đĩa mỏng (đồng xu), viên đá quý nhỏ và cứng (kim cương).
+const BAR = [[1, 1, 0.16], [2.756, 0.55, 0.075], [5.404, 0.28, 0.035], [8.933, 0.12, 0.018]]
+const COIN = [[1, 1, 0.42], [1.594, 0.7, 0.33], [2.136, 0.55, 0.26], [2.296, 0.5, 0.24], [2.653, 0.35, 0.18], [2.918, 0.3, 0.15], [3.156, 0.22, 0.12]]
+const GEM = [[1, 1, 0.07], [1.43, 0.8, 0.055], [1.97, 0.6, 0.04], [2.62, 0.45, 0.03], [3.4, 0.3, 0.02]]
+
 // ---------- Các bộ tiếng ----------
 
 // Mức to cho từng loại tiếng (dB): ăn quân to hơn đi thường một chút; tiếng báo (chiếu, hết ván...) nổi hơn tiếng đi quân
@@ -1106,6 +1153,127 @@ const SETS = {
     })
   },
 
+  // ----- Vàng, Kim cương: tiếng chạm dựng bằng modal() (vài tần số riêng rõ rệt), có lót tiếng thu thật -----
+  // Vàng: quân vàng đặc, rất nặng mà mềm (vàng mềm hơn thép nhiều): "cộp" trầm, ấm, ngân ngắn một chút như thỏi vàng.
+  // Lót tiếng kim loại nặng thu thật phát chậm lại cho có sức nặng. Hết ván: vua đổ, lăn vài vòng rồi nằm im.
+  gold() {
+    const R = 0.74
+    const thud = (h, rate = R) => toUnit(filter(take(heavyMetal(h), 0.24, rate), 'lowpass', 5200))
+    const glow = (seed, f) => toUnit(modal({ f, modes: BAR, seed, seconds: 0.4, click: 0.05, clickTone: 3000 }))
+    const piece = (h, seed, pitch = 1, ring = 0.4) => mix({ sound: thud(h, R * pitch) }, { sound: glow(seed, 1020 * pitch), gain: ring })
+    const place = piece(4, 1)
+    const place2 = piece(2, 2, 0.96)
+    const clack = piece(0, 3, 1.08, 0.55)
+    const land = piece(2, 4, 0.93, 0.35)
+    const tick = toUnit(modal({ f: 1500, modes: BAR, seed: 5, damp: 0.35, seconds: 0.12 }))
+    const tock = toUnit(modal({ f: 1280, modes: BAR, seed: 6, damp: 0.35, seconds: 0.12 }))
+    const hard = mix({ sound: piece(0, 7, 0.88, 0.5) }, { sound: piece(4, 8, 0.8, 0.3), gain: 0.7 })
+    const roll = [0.17, 0.27, 0.35, 0.41].map((at, k) => [piece([2, 4, 0][k % 3], 20 + k, 1 + k * 0.02, 0.3), at, 0.4 * 0.62 ** k])
+    return soften({
+      move: place,
+      capture: seq([clack, 0, 1], [land, 0.028, 0.85]),
+      castle: seq([place, 0, 1], [place2, 0.14, 0.85]),
+      check: seq([clack, 0.09, 1], [piece(0, 9, 1.12, 0.6), 0.16, 0.8]),
+      promote: seq([piece(4, 10, 0.88), 0.08, 0.9], [piece(0, 11, 1.18, 0.6), 0.2, 1]),
+      end: seq([hard, 0, 1], ...roll),
+      draw: seq([piece(4, 12, 0.96), 0, 0.85], [piece(2, 13, 0.96), 0.26, 0.85]),
+      lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
+      start: seq([land, 0, 0.6], [tick, 0.07, 0.45], [tock, 0.15, 0.7], [place2, 0.21, 0.5], [clack, 0.3, 0.4], [place, 0.37, 0.85]),
+    })
+  },
+  // Xu vàng: quân như đồng xu vàng dày. Đặt xuống "cạch" có tiếng ngân "ting" của xu (mặt bàn chặn bớt), hai quân
+  // ăn nhau thì hai xu chạm nhau ngân lâu hơn. Hết ván: vua xoay tít như đồng xu rồi đổ rạp (lạch cạch mau dần).
+  // Ván mới: đổ một nắm xu lên bàn.
+  'gold-coin'() {
+    const coin = (seed, pitch = 1, damp = 0.25) => toUnit(modal({ f: 1850 * pitch, modes: COIN, seed, damp, seconds: 0.5, click: 0.12, clickTone: 4200 }))
+    const thud = (h) => toUnit(filter(take(metal(h), 0.12, 0.85), 'lowpass', 4000))
+    const place = mix({ sound: thud(4), gain: 0.55 }, { sound: coin(1) })
+    const place2 = mix({ sound: thud(2), gain: 0.55 }, { sound: coin(2, 0.95) })
+    const clink = (seed, pitch = 1) => seq([coin(seed, pitch, 1), 0, 1], [coin(seed + 50, pitch * 1.07, 1), 0.007, 0.8])
+    const tick = coin(40, 1.12, 0.12)
+    const tock = coin(41, 0.94, 0.12)
+    const spin = []
+    let when = 0.12
+    let gap = 0.11
+    for (let k = 0; k < 16; k++) {
+      spin.push([coin(60 + k, 1 + k * 0.01, 0.1), when, 0.55 * 0.92 ** k])
+      when += gap
+      gap *= 0.83
+    }
+    const rand = random(91)
+    const pour = []
+    for (let k = 0; k < 14; k++) pour.push([coin(100 + k, 0.88 + 0.25 * rand(), 0.4 + 0.5 * rand()), 0.025 * k + 0.05 * rand(), 0.3 + 0.5 * rand()])
+    return soften({
+      move: place,
+      capture: seq([clink(3), 0, 1], [place2, 0.04, 0.7]),
+      castle: seq([place, 0, 1], [place2, 0.14, 0.85]),
+      check: seq([coin(5, 1.1, 0.6), 0.09, 1], [coin(6, 1.18, 0.6), 0.16, 0.85]),
+      promote: seq([coin(7, 0.9, 0.6), 0.08, 0.9], [clink(8, 1.2), 0.2, 1]),
+      end: seq([clink(9, 0.95), 0, 1], ...spin, [place, when + 0.02, 0.5]),
+      draw: seq([place, 0, 0.85], [place2, 0.26, 0.85]),
+      lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
+      start: seq(...pour, [place, 0.45, 0.8]),
+    })
+  },
+  // Kim cương: viên đá cứng nhất, nhỏ mà đặc: "tính" rất trong, cao, gọn (tắt nhanh hơn pha lê), kèm vài tia "lanh
+  // canh" li ti rất cao ngay sau cú chạm như ánh lấp lánh. Lót một tiếng chạm mặt bàn rất nhẹ cho khỏi mỏng.
+  diamond() {
+    const sparkle = (seed, count = 3, gain = 0.18) => {
+      const rand = random(seed)
+      return mix(...Array.from({ length: count }, (_, k) => ({ sound: tone(6500 + 3500 * rand(), [[1, 1, 0.025 + 0.02 * rand()]], 0.12), at: 0.01 + 0.025 * k + 0.02 * rand(), gain: gain * (1 - k * 0.2) })))
+    }
+    const tink = (seed, pitch = 1, damp = 1) => toUnit(modal({ f: 2700 * pitch, modes: GEM, seed, damp, contact: 0.0002, seconds: 0.3, click: 0.2, clickTone: 7000 }))
+    const knock = (seed, pitch = 1) => toUnit(stoneHit({ seed: seed + 300, low: 900 * pitch, high: 4000, damp: 0.05, tilt: 0.9, grit: 0, seconds: 0.08 }))
+    const piece = (seed, pitch = 1, glint = 0.18) => mix({ sound: tink(seed, pitch) }, { sound: knock(seed, pitch), gain: 0.35 }, { sound: sparkle(seed, 3, glint) })
+    const place = piece(1)
+    const place2 = piece(2, 0.96)
+    const clack = piece(3, 1.08, 0.25)
+    const land = piece(4, 0.93, 0.12)
+    const tick = tink(5, 1.12, 0.4)
+    const tock = tink(6, 0.92, 0.4)
+    const hard = mix({ sound: piece(7, 0.9, 0.3) }, { sound: piece(8, 0.84, 0.2), gain: 0.7 })
+    return soften({
+      move: place,
+      capture: seq([clack, 0, 1], [land, 0.025, 0.85]),
+      castle: seq([place, 0, 1], [place2, 0.14, 0.85]),
+      check: seq([clack, 0.09, 1], [piece(9, 1.12, 0.25), 0.16, 0.8]),
+      promote: seq([piece(10, 0.88), 0.08, 0.9], [piece(11, 1.2, 0.35), 0.2, 1]),
+      // Vua đổ rồi nảy lanh canh vài lần, mỗi lần nhỏ và nhanh hơn, kết bằng một chùm lấp lánh.
+      end: seq([hard, 0, 1], [clack, 0.15, 0.42], [place2, 0.258, 0.27], [tick, 0.336, 0.17], [tock, 0.392, 0.11], [tick, 0.432, 0.07], [sparkle(70, 5, 0.25), 0.45, 1]),
+      draw: seq([piece(12, 0.95), 0, 0.85], [piece(13, 0.95), 0.26, 0.85]),
+      lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
+      start: seq([land, 0, 0.6], [tick, 0.065, 0.45], [tock, 0.15, 0.75], [place2, 0.2, 0.5], [clack, 0.29, 0.4], [place, 0.36, 0.85]),
+    })
+  },
+  // Kim cương trên kính: nền là tiếng gõ thủy tinh thu thật phát nhanh lên (viên đá nhỏ, cứng nên cao và gọn hơn
+  // pha lê), trộn tiếng "tính" của kim cương và chút lấp lánh. Gần bộ Pha lê hơn nhưng sáng, giòn hơn.
+  'diamond-glass'() {
+    const R = 1.3
+    const sparkle = (seed, gain = 0.15) => {
+      const rand = random(seed)
+      return mix(...[0, 1, 2].map((k) => ({ sound: tone(7000 + 3000 * rand(), [[1, 1, 0.03]], 0.1), at: 0.012 + 0.022 * k + 0.015 * rand(), gain: gain * (1 - k * 0.25) })))
+    }
+    const tink = (seed, pitch = 1) => toUnit(modal({ f: 3300 * pitch, modes: GEM, seed, contact: 0.0002, seconds: 0.25, click: 0.15, clickTone: 7000 }))
+    const piece = (light, seed, pitch = 1) => mix({ sound: toUnit(pane(glass(light), 0.18, R * pitch)) }, { sound: tink(seed, pitch), gain: 0.45 }, { sound: sparkle(seed) })
+    const place = piece(2, 1)
+    const place2 = piece(3, 2, 0.96)
+    const clack = piece(1, 3, 1.06)
+    const land = mix({ sound: toUnit(pane(glassRing(2), 0.26, R * 0.92)) }, { sound: tink(4, 0.93), gain: 0.35 })
+    const tick = toUnit(pane(glass(1), 0.05, R * 1.08))
+    const tock = toUnit(pane(glass(3), 0.06, R * 0.95))
+    const hard = mix({ sound: toUnit(pane(glassRing(0), 0.32, R * 0.95)) }, { sound: tink(7, 0.9), gain: 0.5 }, { sound: sparkle(8, 0.25) })
+    return soften({
+      move: place,
+      capture: seq([clack, 0, 1], [land, 0.025, 0.8]),
+      castle: seq([place, 0, 1], [place2, 0.14, 0.85]),
+      check: seq([clack, 0.09, 1], [piece(1, 9, 1.1), 0.16, 0.8]),
+      promote: seq([piece(2, 10, 0.88), 0.08, 0.9], [piece(1, 11, 1.18), 0.2, 1]),
+      end: seq([hard, 0, 1], [clack, 0.15, 0.4], [place2, 0.258, 0.26], [tick, 0.336, 0.16], [tock, 0.392, 0.1], [tick, 0.432, 0.06]),
+      draw: seq([place, 0, 0.85], [place2, 0.26, 0.85]),
+      lowTime: seq(...[0, 0.18, 0.36, 0.54].map((at, i) => [i % 2 ? tock : tick, at, 1 - i * 0.1])),
+      start: seq([land, 0, 0.55], [tick, 0.065, 0.45], [tock, 0.15, 0.7], [place2, 0.2, 0.5], [clack, 0.29, 0.4], [place, 0.36, 0.85]),
+    })
+  },
   // Trống tay, Trống hội dùng bản dày.
   'hand-drum': () => handDrum(true),
   'festival-drum': () => festivalDrum(true),
