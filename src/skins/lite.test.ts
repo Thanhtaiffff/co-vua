@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { droppedShare, isSlow } from './lite'
+import { droppedShare, isSlow, levelFor, readChoice } from './lite'
 
 const smooth60 = Array.from({ length: 120 }, (_, i) => 16.7 + (i % 3) * 0.2)
 const smooth120 = Array.from({ length: 240 }, () => 8.3)
@@ -27,5 +27,24 @@ describe('đo độ mượt', () => {
     expect(isSlow(choppy, 3)).toBe(false)
     expect(isSlow(choppy, 8)).toBe(true)
     expect(isSlow(smooth60, 20)).toBe(false)
+  })
+})
+
+describe('chọn hiệu ứng', () => {
+  it('Đẹp luôn đầy đủ, Nhẹ luôn Bê tông gốc', () => {
+    expect(levelFor('dep', true, true)).toBe('full')
+    expect(levelFor('nhe', false, false)).toBe('max')
+  })
+
+  it('Tự động: máy tính đầy đủ, điện thoại bớt kính, máy từng giật thì Nhẹ', () => {
+    expect(levelFor('auto', false, false)).toBe('full')
+    expect(levelFor('auto', true, false)).toBe('lite')
+    expect(levelFor('auto', false, true)).toBe('max')
+  })
+
+  it('giá trị lưu lạ thì về Tự động', () => {
+    expect(readChoice('nhe')).toBe('nhe')
+    expect(readChoice('xyz')).toBe('auto')
+    expect(readChoice(null)).toBe('auto')
   })
 })

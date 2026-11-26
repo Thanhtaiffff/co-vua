@@ -3,7 +3,14 @@
 // làm tối trang, để thấy ngay bàn cờ thật đổi theo từng lần chạm.
 import { Fragment, useRef, useState } from 'react'
 import { boardIcon, is3d, PIECE_SHAPES, piecesIcon, setTheme, SHAPE_NAMES, useTheme } from '../theme'
+import { setFx, useFx, type FxChoice } from '../skins/lite'
 import { BOARD_GROUPS, boardInfo, PIECE_GROUPS, pieceSetInfo, type PieceSetId } from '../themeCatalog'
+
+const FX: { id: FxChoice; name: string; tip: string }[] = [
+  { id: 'auto', name: 'Tự động', tip: 'Máy giật thì tự chuyển sang Nhẹ' },
+  { id: 'dep', name: 'Đẹp', tip: 'Bê tông kính' },
+  { id: 'nhe', name: 'Nhẹ', tip: 'Bê tông gốc, mượt trên máy yếu' },
+]
 
 type Props = {
   // Vừa chọn bộ quân `id` (để đầu trang cho nghe tiếng của bộ đó nếu tiếng đang theo chủ đề).
@@ -31,6 +38,7 @@ function revealBoard(panel: HTMLElement) {
 
 export function ThemePicker({ onPickPieces }: Props) {
   const theme = useTheme()
+  const fx = useFx()
   const panel = useRef<HTMLDialogElement>(null)
   const button = useRef<HTMLButtonElement>(null)
   const pieceRow = useRef<HTMLDivElement>(null)
@@ -75,7 +83,7 @@ export function ThemePicker({ onPickPieces }: Props) {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`Chủ đề: ${summary}. Bấm để đổi`}
-        data-tip="Chủ đề quân và bàn cờ"
+        data-tip="Chủ đề và hiệu ứng"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -179,6 +187,17 @@ export function ThemePicker({ onPickPieces }: Props) {
                   )
                 })}
               </Fragment>
+            ))}
+          </div>
+
+          <h3 className="theme-panel__label" id="theme-fx-label">
+            Hiệu ứng{fx.choice === 'auto' && fx.level === 'max' && <span className="theme-panel__note"> · đang Nhẹ cho đỡ giật</span>}
+          </h3>
+          <div className="seg seg--fx" role="group" aria-labelledby="theme-fx-label">
+            {FX.map((item) => (
+              <button key={item.id} type="button" aria-pressed={fx.choice === item.id} title={item.tip} onClick={() => setFx(item.id)}>
+                {item.name}
+              </button>
             ))}
           </div>
         </div>

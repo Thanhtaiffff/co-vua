@@ -9,12 +9,12 @@ import { Root } from './Root.tsx'
 import './skins/material.css'
 import './skins/glass.css'
 import './skins/be-tong-kinh.css'
-import { liquidGlass } from './skins/liquidGlass'
+import './skins/be-tong.css'
 import { liteMode } from './skins/lite'
 
-// Mép kính bẻ cong chỉ bật trên máy tính dùng Chrome, Edge (trình duyệt khác vẫn là kính mờ thường). Điện thoại dùng
-// chế độ nhẹ cho khỏi giật, xem skins/lite.ts.
-liquidGlass(liteMode() === 'full')
+// Mức hiệu ứng (Bê tông kính đầy đủ có mép bẻ cong / bớt kính / Bê tông gốc) theo lựa chọn Tự động, Đẹp, Nhẹ trong bảng Chủ đề, xem
+// skins/lite.ts.
+liteMode()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

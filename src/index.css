@@ -1033,7 +1033,14 @@ body:has(.sound-sheet[open]) {
   margin: 2px 16px 6px;
 }
 
-.seg--shapes button {
+/* Hiệu ứng: Tự động | Đẹp | Nhẹ, cuối bảng Chủ đề */
+.seg--fx {
+  display: flex;
+  margin: 2px 16px 10px;
+}
+
+.seg--shapes button,
+.seg--fx button {
   flex: 1;
   min-width: 0;
   padding-inline: 6px;
