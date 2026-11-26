@@ -7,6 +7,15 @@ name = sys.argv[1]
 only = sys.argv[2].split(',') if len(sys.argv) > 2 else None
 INK = {'dark': 0.9, 'light': 0.85, 'shadow': 0.32}
 
+def dist_inside(mask, steps):
+    """Khoảng cách (điểm ảnh) từ mỗi điểm trong hình tới mép hình, tính bằng cách gọt dần từng lớp viền."""
+    im = Image.fromarray((mask * 255).astype(np.uint8))
+    d = np.zeros(mask.shape, np.float64)
+    for _ in range(steps):
+        d += np.asarray(im, np.float64) / 255
+        im = im.filter(ImageFilter.MinFilter(3))
+    return d
+
 def lin(a): return np.where(a <= 0.04045, a / 12.92, ((a + 0.055) / 1.055) ** 2.4)
 def srgb(a): a = np.clip(a, 0, 1); return np.where(a <= 0.0031308, a * 12.92, 1.055 * a ** (1 / 2.4) - 0.055)
 
@@ -21,6 +30,12 @@ for f in sorted(glob.glob(f'out/{name}/*/*.png')):
     ia, ir, ig = I[..., 3:4], I[..., 0:1], I[..., 1:2]
     ink = {**INK, **THEMES.get(theme, {}).get('flatInk', {}).get(color, {})}
     dark = ia * np.clip(1 - ir - ig, 0, 1)
+    # Quân trắng: chỉ giữ nét viền ngoài, bỏ các nét vẽ chi tiết bên trong (giống quân đen); chỗ nét cũ vẫn còn
+    # rãnh khắc nhẹ trên mặt quân. Cùng ngưỡng với rãnh khắc trong main.js (từ 1,3 đơn vị hình vào trong).
+    if color == 'w' and not ink.get('detail'):
+        unit = a.shape[1] / 45
+        d = dist_inside((a[..., 0] > 0.5).astype(np.float64), int(unit * 2.4) + 2)
+        dark = dark * (1 - np.clip((d / unit - 1.3) / 0.8, 0, 1))[..., None]
     light = ia * ig
     # Phủ tối cả thân (kiểu thủy tinh đen sẫm) khi chủ đề yêu cầu.
     if ink.get('body'): dark = np.maximum(dark, ia * np.clip(ir - ig, 0, 1) * ink['body'] / INK['dark'])

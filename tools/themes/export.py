@@ -1,4 +1,4 @@
-"""Xuất ảnh chủ đề cho web: python3 export.py ../../src/themes [chủ đề,...]
+"""Xuất ảnh chủ đề cho web: python3 export.py ../../src/themes [chủ đề,...|all] [kiểu,...]
 
 Ghi tên chủ đề (ví dụ `concrete`) thì chỉ xuất riêng bộ quân và bàn đó, không cần chụp lại các bộ khác.
 
@@ -24,7 +24,12 @@ VARIANTS = {
     '3d-faceted': ('out/fullB', 192, 253, 4),
     '3d-modern': ('out/fullC', 192, 253, 4),
 }
-ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None
+ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 and sys.argv[2] != 'all' else None
+# Tham số thứ ba (vd `2d`): chỉ xuất những kiểu quân đó, các kiểu khác giữ nguyên ảnh cũ.
+KINDS = sys.argv[3].split(',') if len(sys.argv) > 3 else None
+if KINDS:
+    VARIANTS = {k: v for k, v in VARIANTS.items() if k in KINDS}
+    BOARDS = []
 if ONLY:
     SETS = [t for t in SETS if t in ONLY]
     BOARDS = [b for b in BOARDS if b in ONLY]
@@ -104,7 +109,7 @@ for tid in SETS:
         webp(icon(big), f'{OUT}/pieces/{tid}/{var}-icon.webp', q=86)
         sizes[path] = os.path.getsize(path)
 
-if not ONLY:
+if not ONLY and not KINDS:
     # 8-bit: vẽ điểm ảnh 32px, phóng to bằng cách nhân điểm ảnh (không làm mờ).
     cells = {c + p: Image.open(f'out/pixel8/{c}-{p}.png').convert('RGBA').resize((32, 32), Image.NEAREST) for c in 'wb' for p in P}
     png(sheet(cells, 32, 32, 2), f'{OUT}/pieces/8bit/2d.png')
@@ -121,7 +126,7 @@ for bid in BOARDS:
     webp(im.resize((ICON, ICON), Image.LANCZOS), f'{OUT}/boards/{bid}-icon.webp', q=86)
     colors[bid] = coord_colors(im)
     sizes[f'{OUT}/boards/{bid}.webp'] = os.path.getsize(f'{OUT}/boards/{bid}.webp')
-if not ONLY:
+if not ONLY and not KINDS:
     im = Image.open('out/pixel8/board.png').convert('RGB').resize((256, 256), Image.NEAREST)
     png(im, f'{OUT}/boards/8bit.png')
     png(im.resize((ICON, ICON), Image.NEAREST), f'{OUT}/boards/8bit-icon.png')
