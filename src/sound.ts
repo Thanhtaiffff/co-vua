@@ -199,6 +199,32 @@ export function playMove(facts: MoveFacts): void {
   for (const [name, delay] of moveSounds(facts)) playSound(name, delay)
 }
 
+// Lùi lại một nước: chỉ tiếng quân của nước vừa gỡ (đi, ăn quân, nhập thành), không báo chiếu hay phong cấp, vì lùi
+// là gỡ nước đó ra chứ không phải đi nó.
+export function undoSounds(facts: MoveFacts): Sample {
+  return [[facts.castle ? 'castle' : facts.capture ? 'capture' : 'move', 0]]
+}
+
+let review: AudioBufferSourceNode[] = []
+
+// Tiếng lúc xem lại các nước: bấm mới thì tiếng của lần bấm trước tắt ngay, nên bấm nhanh hay giữ phím mũi tên chỉ
+// nghe từng tiếng gọn, không bị dồn thành một tràng. Tắt tiếng thì thôi.
+export function playReview(steps: Sample): void {
+  for (const source of review) {
+    try {
+      source.stop()
+    } catch {
+      // Tiếng đã tắt rồi.
+    }
+  }
+  review = []
+  if (!enabled) return
+  for (const [name, delay] of steps) {
+    const source = start(current, name, delay)
+    if (source) review.push(source)
+  }
+}
+
 // Tiếng "tách" nhỏ khi có câu chat mới: hai nốt ngắn tự tạo bằng Web Audio, không theo bộ tiếng quân cờ, để nghe là
 // biết có tin nhắn chứ không nhầm với tiếng đối thủ đi quân. Tắt tiếng thì thôi.
 export function playChatSound(): void {

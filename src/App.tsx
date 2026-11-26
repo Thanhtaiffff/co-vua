@@ -37,6 +37,7 @@ import { moveMarks, reviewShapes } from './reviewView'
 import { useGameReview } from './useGameReview'
 import { useNow } from './useNow'
 import { showBoard, useReview } from './useReview'
+import { playReviewStep } from './reviewSound'
 
 const COLOR_NAME: Record<Color, string> = { w: 'Trắng', b: 'Đen' }
 const SIDE: Record<Color, 'white' | 'black'> = { w: 'white', b: 'black' }
@@ -81,7 +82,7 @@ export default function App() {
   const name = useCallback((color: Color) => names[color].trim() || COLOR_NAME[color], [names])
 
   // Xem lại thế cờ cũ: bàn cờ, quân đã ăn hiện theo thế cờ đang xem; tiến từng nước thì kêu tiếng nước đó.
-  const stepSound = useCallback((ply: number) => playMove(describeMove(replay(moves.slice(0, ply - 1)), moves[ply - 1])), [moves])
+  const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
   const captured = capturedPieces(shownChess)

@@ -8,8 +8,8 @@ export type Review = {
 
 // Xem lại các nước đã đi: bấm một nước trong cột nước đi, hay dùng nút mũi tên, phím ← → (Home, End để về đầu, về cuối).
 // Ván có thêm nước mới hay vừa đi lại (số nước đổi) thì tự về thế cờ hiện tại, để không lỡ lượt mình.
-// `onStep(ply)`: vừa tiến đúng một nước tới thế cờ sau nước `ply` (để kêu tiếng nước đó).
-export function useReview(total: number, onStep?: (ply: number) => void): Review {
+// `onStep(to, from)`: bàn cờ vừa đổi từ thế cờ sau nước `from` sang thế cờ sau nước `to` (để kêu tiếng, xem reviewSound.ts).
+export function useReview(total: number, onStep?: (to: number, from: number) => void): Review {
   const [view, setView] = useState<{ ply: number; total: number } | null>(null)
   const shown = view && view.total === total ? view.ply : total
 
@@ -17,7 +17,7 @@ export function useReview(total: number, onStep?: (ply: number) => void): Review
     (ply: number) => {
       const next = Math.max(0, Math.min(total, ply))
       if (next === shown) return
-      if (next === shown + 1) onStep?.(next)
+      onStep?.(next, shown)
       setView(next === total ? null : { ply: next, total })
     },
     [total, shown, onStep],
