@@ -361,6 +361,50 @@ const THEMES = {
     c *= 1.0 - groove * 0.3;
     return c;
   }`,
+  concrete: /* glsl */ `
+  
+  // Mặt bê tông: loang xi măng, hạt cát, lỗ rỗ bọt khí. base: màu nền, k: độ thô.
+  vec3 concrete(vec2 p, vec3 base, float k, float s) {
+    float cloud = fbm(vec3(p * 0.55, s)) * 0.5 + 0.5;
+    float mid = snoise(vec3(p * 2.6, s + 3.0));
+    vec3 c = base * (0.86 + 0.2 * cloud + 0.04 * mid);
+    float s1 = snoise(vec3(p * 60.0, s + 9.0));
+    float s2 = snoise(vec3(p * 95.0, s + 1.0));
+    c *= 1.0 + k * s1 * 0.05;
+    c = mix(c, base * 1.18, smoothstep(0.55, 0.9, s2) * k * 0.35);
+    float pore = 0.0;
+    for (int i = 0; i < 2; i++) {
+      vec2 g = p * (i == 0 ? 9.0 : 17.0) + float(i) * 7.3;
+      vec2 cell = floor(g);
+      vec2 r = fract(g) - 0.5 - (hash22(cell + s) - 0.5) * 0.55;
+      float rad = (i == 0 ? 0.16 : 0.12) * (0.4 + 0.8 * hash12(cell + 3.0));
+      float keep = step(1.0 - 0.14 * k, hash12(cell + 9.0));
+      pore = max(pore, keep * smoothstep(rad, rad * 0.5, length(r)));
+    }
+    return c * (1.0 - pore * 0.35);
+  }
+
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Bê tông trần cốp pha (kiểu nhà Tadao Ando): mỗi ô là một tấm đổ khuôn, mặt mịn loang mây, mạch ghép mảnh,
+    // lỗ ty giằng cốp pha tròn ở mỗi góc giao bốn ô.
+    vec3 base = dark ? vec3(0.5, 0.505, 0.51) : vec3(0.79, 0.785, 0.765);
+    vec3 c = concrete(p + sq * 2.3, base, 0.35, s);
+    float tone = hash12(sq + s * 3.0);
+    c *= 0.96 + 0.08 * tone;
+    vec2 e = min(lp, 1.0 - lp);
+    float joint = 1.0 - smoothstep(0.0, 0.006, min(e.x, e.y));
+    c *= 1.0 - joint * 0.3;
+    // Lỗ ty ở góc giao (bỏ các góc nằm trên mép bàn).
+    vec2 corner = floor(p + 0.5);
+    vec2 d = p - corner;
+    float inner = step(0.5, corner.x) * step(corner.x, 7.5) * step(0.5, corner.y) * step(corner.y, 7.5);
+    float r = length(d);
+    float hole = smoothstep(0.075, 0.06, r);
+    float lip = smoothstep(0.1, 0.075, r) - hole;
+    c *= 1.0 - inner * (hole * 0.6 + lip * 0.12);
+    c += inner * hole * smoothstep(0.06, 0.0, length(d + vec2(0.02, 0.02))) * 0.06;
+    return c;
+  }`,
   bubble: /* glsl */ `
   vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
     // Mặt nước: ô sáng xanh nhạt, ô tối xanh biển, ánh sóng (caustics) và vài bọt khí nhỏ.
@@ -379,6 +423,65 @@ const THEMES = {
     float ring = smoothstep(rad, rad - 0.015, d) - smoothstep(rad - 0.02, rad - 0.04, d);
     float glint = smoothstep(rad * 0.35, 0.0, length(r + vec2(rad * 0.35, rad * 0.35)));
     c += keep * (ring * 0.25 + glint * 0.35);
+    return c;
+  }`,
+  gold: /* glsl */ `
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Vàng – ngà: ô sáng ngà voi kem có thớ mịn, ô tối vàng mài xước (vân mảnh chạy một chiều, ánh sáng loang chéo);
+    // giữa các ô là chỉ vàng mảnh khảm.
+    vec2 off = hash22(sq + s) * 40.0;
+    vec3 c;
+    if (dark) {
+      vec2 q = mod(sq.x, 2.0) > 0.5 ? lp : vec2(lp.y, lp.x);
+      float st = snoise(vec3(q.x * 1.6 + off.x, q.y * 260.0, s)) * 0.55 + snoise(vec3(q.x * 5.0 + off.y, q.y * 700.0, s + 2.0)) * 0.3;
+      float sheen = 0.5 + 0.5 * sin((p.x - p.y) * 0.5 + 0.6);
+      vec3 base = vec3(0.74, 0.56, 0.22);
+      c = base * (0.82 + 0.26 * sheen) + st * 0.045;
+      vec2 bv = bevel(lp, 0.025);
+      c += bv.y * 0.08;
+    } else {
+      float grain = snoise(vec3(lp.x * 2.0 + off.x, lp.y * 30.0, s + 3.0)) * 0.5 + 0.5;
+      float cloud = fbm(vec3(p * 0.9, s + 1.0)) * 0.5 + 0.5;
+      c = vec3(0.95, 0.91, 0.82) * (0.95 + 0.05 * cloud) - grain * vec3(0.02, 0.025, 0.035);
+    }
+    vec2 e2 = min(lp, 1.0 - lp);
+    float e = min(e2.x, e2.y);
+    float inlay = 1.0 - smoothstep(0.006, 0.012, e);
+    vec3 gl = vec3(0.86, 0.68, 0.3) * (0.85 + 0.3 * (0.5 + 0.5 * sin((p.x + p.y) * 2.0)));
+    c = mix(c, gl, inlay);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.003, e)) * 0.35;
+    return c;
+  }`,
+  'gold-leaf': /* glsl */ `
+  vec3 board(vec2 p, vec2 sq, vec2 lp, bool dark, float s) {
+    // Sơn mài vàng lá: ô sáng dát vàng lá (từng mảnh vuông nhỏ, mép mảnh chồng lên nhau, nếp nhăn lấp lánh),
+    // ô tối sơn mài đỏ son sâu bóng, có ánh phản chiếu.
+    vec3 c;
+    if (dark) {
+      float deep = fbm(vec3(p * 0.8, s + 2.0)) * 0.5 + 0.5;
+      c = mix(vec3(0.46, 0.09, 0.06), vec3(0.3, 0.05, 0.035), deep * 0.7);
+      float band = smoothstep(0.3, 0.0, abs(fract((p.x + p.y) * 0.08 + 0.1) - 0.5) - 0.18);
+      c += band * vec3(0.08, 0.04, 0.03);
+    } else {
+      // Mảnh vàng lá: lưới 3 x 3 mảnh mỗi ô, lệch nhẹ.
+      vec2 lq = lp * 3.0 + (hash22(sq + s) - 0.5) * 0.3;
+      vec2 cell = floor(lq);
+      vec2 cf = fract(lq);
+      float tone = hash12(cell + sq * 7.0 + s);
+      float crinkle = snoise(vec3(p * 38.0, s + 5.0)) * 0.6 + snoise(vec3(p * 90.0, s + 6.0)) * 0.4;
+      vec3 leaf = vec3(0.93, 0.77, 0.42) * (0.94 + 0.07 * tone) + crinkle * 0.04;
+      float sheen = 0.5 + 0.5 * sin((p.x - p.y) * 0.6 + 2.0);
+      leaf *= 0.9 + 0.14 * sheen;
+      float edge = 1.0 - smoothstep(0.0, 0.03, min(min(cf.x, cf.y), min(1.0 - cf.x, 1.0 - cf.y)));
+      c = leaf * (1.0 - edge * 0.06) + edge * 0.02;
+      // Chỗ vàng lá sứt lộ lớp sơn đỏ bên dưới.
+      float chip = smoothstep(0.78, 0.86, fbm(vec3(p * 3.0, s + 9.0)) * 0.5 + 0.5);
+      c = mix(c, vec3(0.5, 0.14, 0.08), chip * 0.7);
+    }
+    vec2 bv = bevel(lp, 0.02);
+    c += bv.y * 0.06;
+    vec2 e2 = min(lp, 1.0 - lp);
+    c *= 1.0 - (1.0 - smoothstep(0.0, 0.005, min(e2.x, e2.y))) * 0.4;
     return c;
   }`,
 }

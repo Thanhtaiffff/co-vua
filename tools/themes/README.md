@@ -28,8 +28,12 @@ Mỗi lệnh `gen*.py` viết ra một danh sách việc chụp (`jobs-<tên>.js
 | `python3 genboards.py && node drive.mjs jobs-boards.json` | Bàn cờ 1024px, `out/boards/` |
 | `python3 pixel8.py out/pixel8` | Bộ 8-bit (vẽ tay từng điểm ảnh) |
 | `python3 export.py ../../src/themes` | Gộp ảnh, nén WebP, ghi vào web (mất khoảng 5 phút) |
+| `python3 export.py ../../src/themes concrete` | Chỉ xuất riêng một chủ đề (khi thêm bộ mới, không cần chụp lại các bộ cũ) |
+| `python3 export.py ../../src/themes all 2d` | Chỉ xuất lại quân 2D của mọi bộ (không cần ảnh 3D, ảnh bàn) |
 
 Có thể chụp riêng vài chủ đề, vài quân: `python3 gen.py thu steel,wood king,knight 288` rồi `node drive.mjs jobs-thu.json`.
+
+Quân trắng 2D chỉ giữ nét viền ngoài, bỏ các nét vẽ chi tiết bên trong như quân đen (chỗ nét cũ còn rãnh khắc nhẹ). Muốn giữ nét cho một chủ đề thì đặt `'flatInk': {'w': {'detail': True}}` trong `themes.py`.
 
 ## Code nằm ở đâu
 
