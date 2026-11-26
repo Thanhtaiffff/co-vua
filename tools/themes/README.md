@@ -28,6 +28,7 @@ Mỗi lệnh `gen*.py` viết ra một danh sách việc chụp (`jobs-<tên>.js
 | `python3 genboards.py && node drive.mjs jobs-boards.json` | Bàn cờ 1024px, `out/boards/` |
 | `python3 pixel8.py out/pixel8` | Bộ 8-bit (vẽ tay từng điểm ảnh) |
 | `python3 export.py ../../src/themes` | Gộp ảnh, nén WebP, ghi vào web (mất khoảng 5 phút) |
+| `python3 export.py ../../src/themes concrete` | Chỉ xuất riêng một chủ đề (khi thêm bộ mới, không cần chụp lại các bộ cũ) |
 
 Có thể chụp riêng vài chủ đề, vài quân: `python3 gen.py thu steel,wood king,knight 288` rồi `node drive.mjs jobs-thu.json`.
 

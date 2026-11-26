@@ -15,6 +15,9 @@ export const PIECE_SETS = [
   'polished-stone',
   'pebbles',
   'stone-table',
+  'concrete',
+  'gold',
+  'diamond',
   '8bit',
   'bubble',
 ] as const
@@ -33,6 +36,9 @@ export const BOARDS = [
   'polished-stone-gray',
   'pebbles',
   'stone-table',
+  'concrete',
+  'gold',
+  'gold-leaf',
   '8bit',
   'bubble',
 ] as const
@@ -66,6 +72,8 @@ export const PIECE_GROUPS: Group<PieceSetInfo>[] = [
     name: 'Đá',
     items: [pieces('polished-stone', 'Cẩm thạch', 'polished-stone'), pieces('pebbles', 'Sỏi', 'pebbles'), pieces('stone-table', 'Bàn đá', 'stone-table')],
   },
+  { name: 'Bê tông', items: [pieces('concrete', 'Bê tông', 'concrete')] },
+  { name: 'Vàng, Kim cương', items: [pieces('gold', 'Vàng', 'gold'), pieces('diamond', 'Kim cương xanh', 'diamond')] },
   { name: 'Vui nhộn', items: [pieces('8bit', '8-bit', '8bit', false), pieces('bubble', 'Bong bóng', 'bubble')] },
 ]
 
@@ -95,6 +103,16 @@ export const BOARD_GROUPS: Group<BoardInfo>[] = [
       { id: 'polished-stone-gray', name: 'Cẩm thạch xám', light: '#e8e7e5', dark: '#6e7075' },
       { id: 'pebbles', name: 'Sỏi', light: '#dad4c6', dark: '#535251' },
       { id: 'stone-table', name: 'Bàn đá', light: '#b6b4ad', dark: '#525456' },
+    ],
+  },
+  // Bê tông trần đổ cốp pha: mạch ghép mảnh, lỗ ty ở góc giao bốn ô.
+  { name: 'Bê tông', items: [{ id: 'concrete', name: 'Bê tông', light: '#efefee', dark: '#5c5d5e' }] },
+  // Vàng ngà: ô ngà kem, ô vàng mài xước, chỉ vàng khảm. Sơn mài: ô dát vàng lá, ô sơn mài đỏ son.
+  {
+    name: 'Vàng',
+    items: [
+      { id: 'gold', name: 'Vàng ngà', light: '#ffffff', dark: '#906d2b' },
+      { id: 'gold-leaf', name: 'Sơn mài vàng lá', light: '#e1ba66', dark: '#751a12' },
     ],
   },
   {

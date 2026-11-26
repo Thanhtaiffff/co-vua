@@ -166,6 +166,35 @@ const PATTERNS = {
       rough = clamp(rough + lines * uRoughVar + scr * uScratch * 0.12, 0.04, 1.0);
       h = lines;
     }`,
+  concrete: /* glsl */ `
+    uniform vec3 uColA; uniform vec3 uColB; uniform vec3 uColC; uniform float uScale; uniform float uPores; uniform float uPoreSize; uniform float uSand; uniform float uCloud; uniform float uSeed;
+    float cHash(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+    vec3 cHash3(vec3 p) { return vec3(cHash(p), cHash(p + 17.3), cHash(p + 41.9)); }
+    void pattern(vec3 p, inout vec3 col, inout float rough, out float h) {
+      // Bê tông đúc: mảng xi măng loang đậm nhạt, hạt cát li ti, và lỗ rỗ bọt khí (mặt cắt của bọt khí tròn trong
+      // khối) tối và lõm xuống. uPores: tỉ lệ ô có lỗ, uPoreSize: cỡ lỗ, uSand: độ sạn, uCloud: độ loang.
+      vec3 q = p * uScale + vec3(uSeed, uSeed * 0.61, -uSeed);
+      float cloud = fbm(q * 0.18) * 0.5 + 0.5;
+      float mid = snoise(q * 0.9 + 3.0) * 0.5 + 0.5;
+      vec3 c = mix(uColA, uColB, clamp(smoothstep(0.3, 0.85, cloud) * uCloud + mid * 0.12, 0.0, 1.0));
+      float s1 = snoise(q * 8.0);
+      float s2 = snoise(q * 12.5 + 7.0);
+      c *= 1.0 + uSand * s1 * 0.07;
+      c = mix(c, uColC, smoothstep(0.62, 0.9, s2 * 0.5 + 0.5) * uSand * 0.6);
+      float pore = 0.0;
+      for (int k = 0; k < 2; k++) {
+        vec3 g = q * (k == 0 ? 1.0 : 1.9) + float(k) * 13.7;
+        vec3 cell = floor(g);
+        vec3 r = fract(g) - 0.5 - (cHash3(cell) - 0.5) * 0.5;
+        float rad = uPoreSize * (k == 0 ? 1.0 : 0.6) * (0.45 + 0.75 * cHash(cell + 3.1));
+        float keep = step(1.0 - uPores, cHash(cell + 9.7));
+        pore = max(pore, keep * smoothstep(rad, rad * 0.55, length(r)));
+      }
+      c *= 1.0 - pore * 0.6;
+      col = c;
+      rough = clamp(rough + pore * 0.15 + s1 * uSand * 0.06, 0.05, 1.0);
+      h = s1 * uSand * 0.3 - pore;
+    }`,
   swirl: /* glsl */ `
     uniform vec3 uColA; uniform vec3 uColB; uniform float uScale; uniform float uSeed; uniform float uAmount;
     void pattern(vec3 p, inout vec3 col, inout float rough, out float h) {

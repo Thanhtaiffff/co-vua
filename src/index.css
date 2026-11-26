@@ -783,6 +783,28 @@ body:has(.sound-sheet[open]) {
     linear-gradient(160deg, #8e9293, #5c6163);
 }
 
+/* Khối bê tông: xám xi măng lốm đốm lỗ rỗ, mạch ghép và lỗ ty như tấm cốp pha */
+.swatch--concrete {
+  background:
+    radial-gradient(circle at 50% 50%, #3d3e40 0 2px, transparent 2.5px) 0 0 / 50% 50%,
+    radial-gradient(rgb(0 0 0 / 0.25) 0.8px, transparent 1.3px) 1px 2px / 5px 6px,
+    linear-gradient(160deg, #c9c8c3, #9c9b96);
+}
+
+/* Thỏi vàng: vàng bóng có vệt sáng chéo */
+.swatch--gold {
+  background:
+    linear-gradient(135deg, transparent 32%, rgb(255 250 220 / 0.75) 40%, transparent 48%),
+    linear-gradient(135deg, #ffe28a, #d9a730 45%, #a8781a 75%, #f2cd62);
+}
+
+/* Kim cương: mặt giác trắng xanh, vài mặt loé cầu vồng */
+.swatch--diamond {
+  background:
+    conic-gradient(from 30deg at 50% 50%, #ffffff, #cfe2f7, #8fb4e0, #f4f8ff, #ffd9f2, #c9f1ff, #ffffff, #a9c6ea, #ffffff),
+    #dfe9f6;
+}
+
 /* Trống tay: cặp bongo mặt to trên nền gỗ sẫm */
 .swatch--hand-drum {
   background:

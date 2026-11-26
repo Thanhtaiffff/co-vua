@@ -110,6 +110,18 @@ THEMES = {
               'uniforms': {'uColA': '#37383a', 'uColB': '#121212', 'uColC': '#9b9995', 'uScale': 90.0, 'uDark': 0.3, 'uLight': 0.55, 'uSeed': 6.0}},
         'exposure': 1.1,
     },
+    # Bê tông (hợp giao diện Nhẹ "Bê tông gốc"): bê tông đúc để trần, nhám, nhiều lỗ rỗ bọt khí. Quân 2D viền đen
+    # tuyền, bóng đổ cứng như khung giao diện.
+    'concrete': {
+        'name': 'Bê tông',
+        'w': {'pattern': 'concrete', 'roughness': 0.88, 'bump': 0.0016,
+              'uniforms': {'uColA': '#bcbbb5', 'uColB': '#9a9994', 'uColC': '#d4d3cd', 'uScale': 30.0, 'uPores': 0.45, 'uPoreSize': 0.22, 'uSand': 1.0, 'uCloud': 0.8, 'uSeed': 2.0}},
+        'b': {'pattern': 'concrete', 'roughness': 0.85, 'bump': 0.0016,
+              'uniforms': {'uColA': '#4e5053', 'uColB': '#3a3c3f', 'uColC': '#6a6c6f', 'uScale': 30.0, 'uPores': 0.45, 'uPoreSize': 0.22, 'uSand': 1.0, 'uCloud': 0.8, 'uSeed': 7.0}},
+        'exposure': 1.0,
+        'flatInk': {'w': {'ink': '#0d0d0d', 'dark': 1.0, 'hard': 0.03, 'shadow': 0.3},
+                    'b': {'ink': '#0d0d0d', 'dark': 1.0, 'hard': 0.03, 'shadow': 0.3, 'light': 0.5}},
+    },
     'bubble': {
         'name': 'Bong bóng',
         'w': {'glass': True, 'ior': 1.33, 'roughness': 0.02, 'refrRoughness': 0.03, 'tint': '#eef2ff', 'density': 0.6,
@@ -121,7 +133,7 @@ THEMES = {
         'flat': {'ceil': 0.6},
         'flatInk': {'b': {'light': 0, 'body': 0.88}},
     },
-    # ----- Vàng: kim loại vàng 24K. Bên đen: sơn mài đen bóng như đàn piano (Vàng) hoặc vàng đen mài xước. -----
+    # ----- Vàng: kim loại vàng 24K, bên đen sơn mài đen bóng như đàn piano. -----
     'gold': {
         'name': 'Vàng',
         'w': {'color': '#ffd95e', 'metalness': 1.0, 'roughness': 0.13},
@@ -130,33 +142,9 @@ THEMES = {
         'envSide': {'b': {'wall': 0.22, 'key': 1.1}},
         'flatInk': {'b': {'light': 0}},
     },
-    'gold-brushed': {
-        'name': 'Vàng xước',
-        'w': {'pattern': 'brushed', 'color': '#f6c552', 'metalness': 1.0, 'roughness': 0.26, 'anisotropy': 0.65,
-              'uniforms': {'uLines': 0.16, 'uRoughVar': 0.1, 'uScratch': 0.55, 'uScratchLift': -0.2, 'uFreq': 160.0, 'uSeed': 2.0}},
-        'b': {'pattern': 'brushed', 'color': '#3a2e1a', 'metalness': 1.0, 'roughness': 0.32, 'anisotropy': 0.7,
-              'uniforms': {'uLines': 0.2, 'uRoughVar': 0.1, 'uScratch': 0.7, 'uScratchLift': 0.8, 'uFreq': 160.0, 'uSeed': 5.0}},
-        'exposure': 1.0, 'env': {'wall': 0.18, 'key': 1.25},
-        'envSide': {'b': {'wall': 0.32, 'key': 1.15}},
-        'flatSide': {'b': {'dome': 0.1, 'env': {'wall': 0.28, 'key': 1.7}, 'ceil': 0.45}},
-        'flatInk': {'b': {'light': 0}},
-    },
     # ----- Kim cương: chiết suất 2,42 (pha lê chỉ 1,6), mặt giác, tán sắc ra ánh cầu vồng ("lửa") và chớp sáng. -----
+    # Bên trắng kim cương trong, bên đen kim cương xanh lam.
     'diamond': {
-        'name': 'Kim cương',
-        'w': {'glass': True, 'ior': 2.42, 'roughness': 0.01, 'refrRoughness': 0.02, 'tint': '#ffffff', 'density': 0.8,
-              'transmit': 0.1, 'edge': 2.0, 'reflBoost': 2.0, 'refrBoost': 3.4, 'facet': 0.55, 'facetScale': 15.0,
-              'fire': 0.06, 'sparkle': 0.9},
-        'b': {'glass': True, 'ior': 2.42, 'roughness': 0.01, 'refrRoughness': 0.03, 'tint': '#26262b', 'density': 2.2,
-              'transmit': 0.08, 'edge': 2.0, 'reflBoost': 2.0, 'refrBoost': 0.8, 'facet': 0.3, 'facetScale': 15.0,
-              'fire': 0.03, 'sparkle': 0.5},
-        'exposure': 1.0, 'shadow': 0.2, 'contact': 0.35, 'env': {'wall': 0.06, 'key': 1.3},
-        'flat': {'ceil': 0.7, 'dome': 0.08, 'lowpoly': 3.0},
-        'flatMat': {'w': {'facet': 0.2, 'facetScale': 4.0, 'sparkle': 0.6, 'refrBoost': 3.0},
-                    'b': {'facet': 0.2, 'facetScale': 4.0, 'sparkle': 0.25, 'reflBoost': 1.0, 'refrBoost': 0.22, 'density': 3.0}},
-        'flatInk': {'b': {'light': 0}},
-    },
-    'diamond-blue': {
         'name': 'Kim cương xanh',
         'w': {'glass': True, 'ior': 2.42, 'roughness': 0.01, 'refrRoughness': 0.02, 'tint': '#ffffff', 'density': 0.8,
               'transmit': 0.1, 'edge': 2.0, 'reflBoost': 2.0, 'refrBoost': 3.4, 'facet': 0.55, 'facetScale': 15.0,

@@ -1,4 +1,6 @@
-"""Xuất ảnh chủ đề cho web: python3 export.py ../../src/themes
+"""Xuất ảnh chủ đề cho web: python3 export.py ../../src/themes [chủ đề,...]
+
+Ghi tên chủ đề (ví dụ `concrete`) thì chỉ xuất riêng bộ quân và bàn đó, không cần chụp lại các bộ khác.
 
 Mỗi bộ quân, mỗi kiểu (2D, 3D ba dáng) gộp thành một tấm ảnh 6 cột x 2 hàng (Tốt, Mã, Tượng, Xe, Hậu, Vua;
 hàng trên quân trắng, hàng dưới quân đen), giữa các ô chừa khe trong suốt cho khỏi lem sang nhau.
@@ -12,9 +14,9 @@ from PIL import Image
 OUT = sys.argv[1]
 P = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king']
 SETS = ['wood', 'steel', 'steel-brushed', 'bronze', 'cast-iron', 'crystal', 'glass-marbles', 'thick-glass',
-        'polished-stone', 'pebbles', 'stone-table', 'bubble']
+        'polished-stone', 'pebbles', 'stone-table', 'concrete', 'gold', 'diamond', 'bubble']
 BOARDS = ['wood', 'steel', 'bronze', 'cast-iron', 'crystal', 'glass-marbles', 'thick-glass', 'polished-stone',
-          'polished-stone-gray', 'pebbles', 'stone-table', 'bubble']
+          'polished-stone-gray', 'pebbles', 'stone-table', 'concrete', 'gold', 'gold-leaf', 'bubble']
 # Kiểu quân: thư mục ảnh chụp, cỡ một ô, khe giữa các ô. Cỡ ô phải khớp SHEET_2D, SHEET_3D, SHEET_8BIT trong src/theme.ts.
 VARIANTS = {
     '2d': ('out/flat-c', 160, 160, 4),
@@ -22,6 +24,10 @@ VARIANTS = {
     '3d-faceted': ('out/fullB', 192, 253, 4),
     '3d-modern': ('out/fullC', 192, 253, 4),
 }
+ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None
+if ONLY:
+    SETS = [t for t in SETS if t in ONLY]
+    BOARDS = [b for b in BOARDS if b in ONLY]
 ICON = 64  # ảnh nhỏ trong bảng chọn: hiện cỡ 32px, vẽ gấp đôi cho màn hình nét
 
 
@@ -98,14 +104,15 @@ for tid in SETS:
         webp(icon(big), f'{OUT}/pieces/{tid}/{var}-icon.webp', q=86)
         sizes[path] = os.path.getsize(path)
 
-# 8-bit: vẽ điểm ảnh 32px, phóng to bằng cách nhân điểm ảnh (không làm mờ).
-cells = {c + p: Image.open(f'out/pixel8/{c}-{p}.png').convert('RGBA').resize((32, 32), Image.NEAREST) for c in 'wb' for p in P}
-png(sheet(cells, 32, 32, 2), f'{OUT}/pieces/8bit/2d.png')
-png(cells['wknight'].resize((ICON, ICON), Image.NEAREST), f'{OUT}/pieces/8bit/2d-icon.png')
+if not ONLY:
+    # 8-bit: vẽ điểm ảnh 32px, phóng to bằng cách nhân điểm ảnh (không làm mờ).
+    cells = {c + p: Image.open(f'out/pixel8/{c}-{p}.png').convert('RGBA').resize((32, 32), Image.NEAREST) for c in 'wb' for p in P}
+    png(sheet(cells, 32, 32, 2), f'{OUT}/pieces/8bit/2d.png')
+    png(cells['wknight'].resize((ICON, ICON), Image.NEAREST), f'{OUT}/pieces/8bit/2d-icon.png')
 
-# Cổ điển: bộ cburnett có sẵn trong chessground, chỉ cần ảnh nhỏ cho bảng chọn (vẽ từ file SVG bằng Chromium).
-subprocess.run(['node', 'svg2png.mjs', 'cburnett/w-knight.svg', 'out/classic-knight.png', '256'], check=True)
-png(icon(Image.open('out/classic-knight.png').convert('RGBA')), f'{OUT}/pieces/classic/2d-icon.png')
+    # Cổ điển: bộ cburnett có sẵn trong chessground, chỉ cần ảnh nhỏ cho bảng chọn (vẽ từ file SVG bằng Chromium).
+    subprocess.run(['node', 'svg2png.mjs', 'cburnett/w-knight.svg', 'out/classic-knight.png', '256'], check=True)
+    png(icon(Image.open('out/classic-knight.png').convert('RGBA')), f'{OUT}/pieces/classic/2d-icon.png')
 
 colors = {}
 for bid in BOARDS:
@@ -114,16 +121,17 @@ for bid in BOARDS:
     webp(im.resize((ICON, ICON), Image.LANCZOS), f'{OUT}/boards/{bid}-icon.webp', q=86)
     colors[bid] = coord_colors(im)
     sizes[f'{OUT}/boards/{bid}.webp'] = os.path.getsize(f'{OUT}/boards/{bid}.webp')
-im = Image.open('out/pixel8/board.png').convert('RGB').resize((256, 256), Image.NEAREST)
-png(im, f'{OUT}/boards/8bit.png')
-png(im.resize((ICON, ICON), Image.NEAREST), f'{OUT}/boards/8bit-icon.png')
-colors['8bit'] = coord_colors(im)
-# Bàn Cổ điển: hai màu nâu của chessground.
-brown = Image.new('RGB', (8, 8))
-for r in range(8):
-    for f in range(8):
-        brown.putpixel((f, r), (0xf0, 0xd9, 0xb5) if (r + f) % 2 == 0 else (0xb5, 0x88, 0x63))
-png(brown.resize((ICON, ICON), Image.NEAREST), f'{OUT}/boards/classic-icon.png')
+if not ONLY:
+    im = Image.open('out/pixel8/board.png').convert('RGB').resize((256, 256), Image.NEAREST)
+    png(im, f'{OUT}/boards/8bit.png')
+    png(im.resize((ICON, ICON), Image.NEAREST), f'{OUT}/boards/8bit-icon.png')
+    colors['8bit'] = coord_colors(im)
+    # Bàn Cổ điển: hai màu nâu của chessground.
+    brown = Image.new('RGB', (8, 8))
+    for r in range(8):
+        for f in range(8):
+            brown.putpixel((f, r), (0xf0, 0xd9, 0xb5) if (r + f) % 2 == 0 else (0xb5, 0x88, 0x63))
+    png(brown.resize((ICON, ICON), Image.NEAREST), f'{OUT}/boards/classic-icon.png')
 
 for bid, (light, dark) in colors.items():
     print(f"{bid}: light: '{light}', dark: '{dark}'")

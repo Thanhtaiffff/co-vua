@@ -28,6 +28,8 @@ for f in sorted(glob.glob(f'out/{name}/*/*.png')):
     avg = rgb[inside].mean(0) if inside.any() else np.array([0.5, 0.5, 0.5])
     # Nét tối: gần đen, ngả nhẹ theo màu chất liệu cho hợp tông.
     dcol = avg * 0.12 + 0.012
+    # Chủ đề muốn nét đen tuyền (kiểu Bê tông: viền đen dày như khung giao diện).
+    if ink.get('ink'): dcol = lin(np.array([int(ink['ink'][i:i + 2], 16) / 255 for i in (1, 3, 5)]))
     kd = np.clip(ink['dark'] * dark, 0, 1)
     # Màu đã nhân alpha để ghép đúng ở viền mờ.
     pm = rgb * a
@@ -41,7 +43,11 @@ for f in sorted(glob.glob(f'out/{name}/*/*.png')):
     H, W = na.shape[:2]
     # Bóng đổ mềm lệch xuống dưới bên phải (đèn ở góc trên trái).
     sh = Image.fromarray((na[..., 0] * 255).astype(np.uint8))
-    sh = sh.transform(sh.size, Image.AFFINE, (1, 0, -W * 0.012, 0, 1, -H * 0.02)).filter(ImageFilter.GaussianBlur(W * 0.014))
+    if ink.get('hard'):
+        # Bóng cứng: lệch hẳn xuống dưới bên phải, mép sắc, không mờ (như bóng đổ của khung giao diện Bê tông).
+        sh = sh.transform(sh.size, Image.AFFINE, (1, 0, -W * ink['hard'], 0, 1, -H * ink['hard']))
+    else:
+        sh = sh.transform(sh.size, Image.AFFINE, (1, 0, -W * 0.012, 0, 1, -H * 0.02)).filter(ImageFilter.GaussianBlur(W * 0.014))
     sa = np.asarray(sh).astype(np.float64)[..., None] / 255 * ink['shadow']
     fa = na + sa * (1 - na)
     frgb = np.where(fa > 1e-4, out_rgb * na / np.maximum(fa, 1e-4), 0)
