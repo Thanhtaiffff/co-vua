@@ -37,6 +37,7 @@ import { END_DELAY, playMove, playSound } from '../sound'
 import { loadSaved, save } from '../storage'
 import { useNow } from '../useNow'
 import { showBoard, useReview } from '../useReview'
+import { playReviewStep } from '../reviewSound'
 import './bot.css'
 import { BotSetup, type ColorChoice } from './BotSetup'
 import { botMove, BOT_LEVELS, DEFAULT_LEVEL, fromUci, levelInfo, toUci } from './levels'
@@ -124,7 +125,7 @@ export function BotPage() {
   const botName = `Máy · ${botLevel.name}`
   const name = useCallback((color: Color) => (color === you ? yourName || 'Bạn' : botName), [you, yourName, botName])
 
-  const stepSound = useCallback((ply: number) => playMove(describeMove(replay(moves.slice(0, ply - 1)), moves[ply - 1])), [moves])
+  const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
   const captured = capturedPieces(shownChess)

@@ -23,6 +23,7 @@ import { useNow } from '../useNow'
 import { moveMarks, reviewShapes } from '../reviewView'
 import { useGameReview } from '../useGameReview'
 import { showBoard, useReview } from '../useReview'
+import { playReviewStep } from '../reviewSound'
 import { navigate } from '../router'
 import { loadSaved, save } from '../storage'
 import { ChatBubble, ChatPanel } from './ChatPanel'
@@ -148,7 +149,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   useFeedbackGame(feedbackGame)
 
   // ---------- Xem lại nước cũ ----------
-  const stepSound = useCallback((ply: number) => playMove(describeMove(replay(played.slice(0, ply - 1)), played[ply - 1])), [played])
+  const stepSound = useCallback((to: number, from: number) => playReviewStep(played, from, to), [played])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(played.slice(0, review.shown)) : chess), [review.reviewing, review.shown, played, chess])
   const captured = capturedPieces(shownChess)
