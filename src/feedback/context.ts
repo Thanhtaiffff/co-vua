@@ -128,6 +128,7 @@ const HOW: Record<Exclude<GameResult['kind'], 'playing'>, string> = {
   checkmate: 'chiếu bí',
   timeout: 'hết giờ',
   resign: 'đầu hàng',
+  abandon: 'bên kia rời ván',
   timeoutDraw: 'hết giờ nhưng bên kia không đủ quân chiếu bí',
   agreed: 'hai bên đồng ý',
   stalemate: 'pat',

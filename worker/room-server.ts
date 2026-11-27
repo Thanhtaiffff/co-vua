@@ -9,7 +9,21 @@
 // một lần và gửi thư có mức, thư quá dài bị bỏ, và chỉ báo cho cả phòng khi có gì thay đổi thật.
 import { DurableObject } from 'cloudflare:workers'
 import { MAX_VISITORS, type ChatLine, type CreateRequest, type ErrorCode, type ServerMessage } from '../src/online/protocol'
-import { chat, chatOf, checkFlag, createRoom, flagDue, handle, parseClientMessage, seatOf, upgradeRoom, viewsOf, type RoomData, type Seat } from '../src/online/room'
+import {
+  chat,
+  chatOf,
+  checkFlag,
+  createRoom,
+  flagDue,
+  handle,
+  markPresence,
+  parseClientMessage,
+  seatOf,
+  upgradeRoom,
+  viewsOf,
+  type RoomData,
+  type Seat,
+} from '../src/online/room'
 import type { FeedbackBox } from './feedback-box'
 import type { Gate } from './gate'
 
@@ -125,11 +139,11 @@ export class ChessRoom extends DurableObject<Env> {
     } catch {
       // Đường dây đã đóng hẳn rồi.
     }
-    this.left(ws)
+    await this.left(ws)
   }
 
   async webSocketError(ws: WebSocket): Promise<void> {
-    this.left(ws)
+    await this.left(ws)
   }
 
   // Hẹn giờ reo: hoặc bên đang tới lượt hết giờ, hoặc phòng đã bỏ không quá lâu.
@@ -168,13 +182,18 @@ export class ChessRoom extends DurableObject<Env> {
     }
     const wasOnline = this.online()
     ws.serializeAttachment({ ...attachment(ws), token } satisfies Attachment)
+    // Ghi ai đang ở, ai đã rời phòng (để nhận thắng khi đối thủ bỏ đi). Máy chủ vừa khởi động lại (web lên bản mới)
+    // thì người chưa nối lại được tính là rời đi từ lúc này.
+    const moved = markPresence(this.room, this.online(), now)
     if (checkFlag(this.room, now)) {
       await this.save()
       this.broadcast()
     } else if (seat !== null && !wasOnline[seat]) {
+      if (moved) await this.save()
       // Người chơi vừa vào (hoặc nối lại mạng): báo cho mọi người, để chấm xanh "đang online" sáng lên.
       this.broadcast()
     } else {
+      if (moved) await this.save()
       this.send(ws, now)
     }
     // Người chơi vừa nối (hay nối lại) thì nhận cả chat của phòng.
@@ -183,10 +202,13 @@ export class ChessRoom extends DurableObject<Env> {
   }
 
   // Đường dây `ws` đóng: chỉ báo cho cả phòng khi đó là đường dây cuối của một người chơi (chấm xanh tắt).
-  private left(ws: WebSocket): void {
+  private async left(ws: WebSocket): Promise<void> {
     if (!this.room) return
     const seat = seatOf(this.room, attachment(ws).token)
-    if (seat !== null && !this.online(ws)[seat]) this.broadcast(ws)
+    const online = this.online(ws)
+    if (seat === null || online[seat]) return
+    if (markPresence(this.room, online, Date.now())) await this.save()
+    this.broadcast(ws)
   }
 
   // Còn được gửi thư không (mỗi lần gửi tốn một lượt; lượt hồi lại dần theo thời gian).

@@ -385,6 +385,10 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
 
   const early = moves.length < 2
   const offline = connection !== 'open'
+  // Ván không tính giờ mà đối thủ rời phòng: đếm ngược tới lúc được nhận thắng (máy chủ báo còn bao lâu).
+  const claimAt = me && !over && game.claimIn !== null ? receivedAt + game.claimIn : null
+  const claimNow = useNow(claimAt)
+  const claimLeft = claimAt === null ? 0 : Math.max(0, Math.ceil((claimAt - claimNow) / 1000))
   const showMatch = game.number > 1 || game.score.w + game.score.b > 0
   // Đi lại: lùi nước vừa đi của mình; đang tới lượt mình thì lùi cả nước đối thủ vừa đi.
   const myTakeback = me ? takebackPlies(moves.length, me) : 0
@@ -532,6 +536,20 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
               </button>
               <button type="button" className="btn" onClick={() => send({ t: 'draw', yes: false })}>
                 Từ chối
+              </button>
+            </div>
+          </div>
+        )}
+
+        {opponent && claimAt !== null && (
+          <div className="offer" role="status">
+            <p className="offer__text">
+              {name(opponent)} đã rời ván.{' '}
+              {claimLeft > 0 ? `Quá ${claimLeft} giây nữa chưa quay lại thì ${early ? 'bạn huỷ ván được' : 'bạn nhận thắng được'}.` : ''}
+            </p>
+            <div className="offer__actions">
+              <button type="button" className="btn btn--primary" disabled={claimLeft > 0 || offline} onClick={() => send({ t: 'claim' })}>
+                {early ? 'Huỷ ván' : 'Nhận thắng'}
               </button>
             </div>
           </div>

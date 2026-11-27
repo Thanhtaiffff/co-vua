@@ -62,6 +62,7 @@ export type RoomData = {
   score: [number, number] // tỉ số theo ghế, cộng dồn qua các ván tái đấu
   chat: ChatLine[] // CHAT_KEEP câu chat gần nhất của cả phòng, cũ trước mới sau
   chatNext: number // số thứ tự của câu chat tiếp theo
+  away: [number | null, number | null] // lúc người ngồi ghế đó rời phòng (đóng hết tab, mất mạng); null: đang ở trong phòng
   updated: number
 }
 
@@ -78,6 +79,9 @@ const NAME_LIMIT = 20
 const RAW_NAME_LIMIT = 200
 // Câu chat trong thư dài hơn mức này thì khỏi đọc (câu thật chỉ giữ CHAT_LIMIT ký tự, emoji tính hai).
 const RAW_CHAT_LIMIT = 4 * CHAT_LIMIT
+// Ván không tính giờ mà đối thủ rời phòng quá bấy nhiêu thì mình được nhận thắng (như lichess), khỏi phải chờ mãi.
+// Ván có giờ thì đồng hồ của người bỏ đi tự hết, không cần.
+export const CLAIM_AFTER = 60_000
 
 export function cleanName(name: unknown): string {
   if (typeof name !== 'string') return ''
@@ -142,6 +146,8 @@ export function parseClientMessage(text: string): ClientMessage | null {
     }
     case 'resign':
       return { t: 'resign' }
+    case 'claim':
+      return { t: 'claim' }
     case 'draw':
     case 'takeback':
     case 'rematch':
@@ -165,6 +171,7 @@ export function createRoom(id: string, request: CreateRequest, now: number): Roo
     score: [0, 0],
     chat: [],
     chatNext: 1,
+    away: [null, null],
     updated: now,
   }
 }
@@ -210,6 +217,7 @@ function newGame(number: number, white: Seat, control: TimeControl | null): Game
 export function upgradeRoom(room: RoomData): RoomData {
   if (!Array.isArray(room.chat)) room.chat = []
   room.chatNext ??= 1
+  if (!Array.isArray(room.away)) room.away = [null, null]
   for (const seat of room.seats as (Partial<SeatData> & SeatData)[]) {
     seat.chatOff ??= false
     seat.chatBudget ??= CHAT_BURST
@@ -323,6 +331,39 @@ function resign(room: RoomData, seat: Seat, now: number): boolean {
   // Chưa ai đi quá một nước thì chỉ là huỷ ván, không ai thua.
   const end: OnlineStatus = game.moves.length < 2 ? { kind: 'aborted' } : { kind: 'resign', winner: colorOf(game, seat) === 'w' ? 'b' : 'w' }
   finish(room, game, end, now)
+  return true
+}
+
+// Ai đang ở trong phòng (`online[ghế]`), do máy chủ đếm đường dây. Ghi lại lúc người chơi rời đi, xoá khi quay lại.
+// Trả về true nếu có thay đổi cần lưu.
+export function markPresence(room: RoomData, online: [boolean, boolean], now: number): boolean {
+  let changed = false
+  room.seats.forEach((_, index) => {
+    const seat = index as Seat
+    const away = online[seat] ? null : (room.away[seat] ?? now)
+    if (away !== room.away[seat]) {
+      room.away[seat] = away
+      changed = true
+    }
+  })
+  return changed
+}
+
+// Còn bao lâu nữa thì ghế `seat` được nhận thắng vì đối thủ bỏ đi (ms, 0 là ngay bây giờ); null khi không nhận được:
+// ván có giờ, đã xong, chưa có đối thủ, hay đối thủ vẫn đang ở trong phòng.
+export function claimIn(room: RoomData, seat: Seat, now: number): number | null {
+  const game = room.game
+  if (!game || game.end || room.control !== null || room.seats.length < 2) return null
+  const away = room.away[seat === 0 ? 1 : 0]
+  return away === null ? null : Math.max(0, away + CLAIM_AFTER - now)
+}
+
+// Đối thủ bỏ đi đủ lâu: nhận thắng. Chưa ai đi quá một nước thì chỉ huỷ ván, như đầu hàng.
+function claim(room: RoomData, seat: Seat, now: number): boolean {
+  const wait = claimIn(room, seat, now)
+  const game = room.game
+  if (wait === null || wait > 0 || !game) return false
+  finish(room, game, game.moves.length < 2 ? { kind: 'aborted' } : { kind: 'abandon', winner: colorOf(game, seat) }, now)
   return true
 }
 
@@ -454,6 +495,9 @@ export function handle(room: RoomData, token: string | null, message: ClientMess
     case 'resign':
       changed = resign(room, seat, now)
       break
+    case 'claim':
+      changed = claim(room, seat, now)
+      break
     case 'draw':
       changed = draw(room, seat, message.yes === true, now)
       break
@@ -490,7 +534,7 @@ export function viewsOf(room: RoomData, now: number, online: [boolean, boolean])
   const game = room.game
   const name = (s: Seat) => room.seats[s]?.name ?? ''
   const player = (s: Seat) => ({ name: name(s), online: online[s], chatOff: room.seats[s]?.chatOff ?? false })
-  let shared: Omit<GameView, 'you'> | null = null
+  let shared: Omit<GameView, 'you' | 'claimIn'> | null = null
   if (game) {
     const byColor = <T,>(pick: (s: Seat) => T): Record<Color, T> =>
       game.white === 0 ? { w: pick(0), b: pick(1) } : { w: pick(1), b: pick(0) }
@@ -519,7 +563,10 @@ export function viewsOf(room: RoomData, now: number, online: [boolean, boolean])
     host: player(0),
     hostColor: room.hostColor,
     role: seat === 0 ? 'host' : seat === 1 ? 'guest' : 'visitor',
-    game: game && shared ? { ...shared, you: seat === null ? null : colorOf(game, seat) } : null,
+    game:
+      game && shared
+        ? { ...shared, you: seat === null ? null : colorOf(game, seat), claimIn: seat === null ? null : claimIn(room, seat, now) }
+        : null,
   })
 }
 

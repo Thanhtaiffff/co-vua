@@ -7,10 +7,12 @@ import {
   LAG_QUOTA_MAX,
   LAG_QUOTA_START,
   checkFlag,
+  CLAIM_AFTER,
   cleanName,
   createRoom,
   flagDue,
   handle,
+  markPresence,
   parseClientMessage,
   parseCreateRequest,
   upgradeRoom,
@@ -655,5 +657,78 @@ describe('chat', () => {
     const upgraded = upgradeRoom(old)
     expect(chat(upgraded, HOST, 'chào', 0)?.id).toBe(1)
     expect(view(upgraded, GUEST, 0, BOTH).game!.players.w.chatOff).toBe(false)
+  })
+})
+
+describe('đối thủ rời ván không tính giờ', () => {
+  // Ván không tính giờ, chủ phòng cầm Trắng, đã đi 2 nước; khách rời phòng lúc 1000.
+  function left(control: { minutes: number; increment: number } | null = null): RoomData {
+    const r = started('w', control)
+    markPresence(r, BOTH, 0)
+    play(r, ['e2e4', 'e7e5'])
+    expect(markPresence(r, [true, false], 1000)).toBe(true)
+    return r
+  }
+
+  it('đếm ngược từ lúc đối thủ rời đi; chưa đủ thì không nhận thắng được', () => {
+    const r = left()
+    expect(view(r, HOST, 1000, [true, false]).game!.claimIn).toBe(CLAIM_AFTER)
+    expect(view(r, HOST, 31_000, [true, false]).game!.claimIn).toBe(CLAIM_AFTER - 30_000)
+    expect(send(r, HOST, { t: 'claim' }, 1000 + CLAIM_AFTER - 1)).toBe(false)
+    expect(r.game!.end).toBeNull()
+  })
+
+  it('đủ lâu thì nhận thắng, được cộng điểm', () => {
+    const r = left()
+    expect(send(r, HOST, { t: 'claim' }, 1000 + CLAIM_AFTER)).toBe(true)
+    const game = view(r, HOST, 1000 + CLAIM_AFTER, [true, false]).game!
+    expect(game.status).toEqual({ kind: 'abandon', winner: 'w' })
+    expect(game.score).toEqual({ w: 1, b: 0 })
+    expect(game.claimIn).toBeNull()
+  })
+
+  it('đối thủ quay lại thì thôi đếm; rời lần nữa thì đếm lại từ đầu', () => {
+    const r = left()
+    markPresence(r, BOTH, 30_000)
+    expect(view(r, HOST, 30_000, BOTH).game!.claimIn).toBeNull()
+    expect(send(r, HOST, { t: 'claim' }, 1000 + CLAIM_AFTER)).toBe(false)
+    markPresence(r, [true, false], 50_000)
+    expect(view(r, HOST, 50_000, [true, false]).game!.claimIn).toBe(CLAIM_AFTER)
+  })
+
+  it('người đi rồi, người xem, hay ván có giờ thì không nhận thắng được', () => {
+    const r = left()
+    expect(send(r, GUEST, { t: 'claim' }, 1000 + CLAIM_AFTER)).toBe(false)
+    expect(send(r, 'visitor-token-ccccccccc', { t: 'claim' }, 1000 + CLAIM_AFTER)).toBe(false)
+    expect(view(r, GUEST, 1000, [true, false]).game!.claimIn).toBeNull()
+    expect(view(r, null, 1000, [true, false]).game!.claimIn).toBeNull()
+    const timed = left({ minutes: 3, increment: 2 })
+    expect(view(timed, HOST, 1000, [true, false]).game!.claimIn).toBeNull()
+    expect(send(timed, HOST, { t: 'claim' }, 2000 + CLAIM_AFTER)).toBe(false)
+  })
+
+  it('chưa ai đi quá một nước thì chỉ huỷ ván, không tính điểm', () => {
+    const r = started('w', null)
+    play(r, ['e2e4'])
+    markPresence(r, [true, false], 0)
+    expect(send(r, HOST, { t: 'claim' }, CLAIM_AFTER)).toBe(true)
+    expect(r.game!.end).toEqual({ kind: 'aborted' })
+    expect(r.score).toEqual([0, 0])
+  })
+
+  it('máy chủ khởi động lại: người chưa nối lại tính là rời đi từ lúc đó, không ghi đè lúc rời cũ', () => {
+    const r = left()
+    expect(markPresence(r, [true, false], 20_000)).toBe(false)
+    expect(r.away).toEqual([null, 1000])
+  })
+
+  it('phòng lưu từ bản trước chưa có ô "rời phòng" thì được điền', () => {
+    const old = started('w', null) as Partial<RoomData> & RoomData
+    delete (old as Partial<RoomData>).away
+    expect(upgradeRoom(old).away).toEqual([null, null])
+  })
+
+  it('đọc được thư nhận thắng', () => {
+    expect(parseClientMessage('{"t":"claim"}')).toEqual({ t: 'claim' })
   })
 })

@@ -39,6 +39,7 @@ export type GameView = {
   rematch: Record<Color, boolean> // bên nào đã bấm tái đấu
   rematchDeclined: Color | null // bên vừa bị từ chối đấu ván nữa
   rematchAsked: Record<Color, number> // bên đó đã mời đấu ván nữa bao nhiêu lần sau ván này (tối đa REMATCH_ASKS)
+  claimIn: number | null // ván không tính giờ, đối thủ rời phòng: còn bao lâu (ms) mình được nhận thắng; null: không nhận được
 }
 
 export type RoomView = {
@@ -59,6 +60,7 @@ export type ClientMessage =
   | { t: 'join'; name: string } // bạn bè bấm "Vào chơi"
   | { t: 'move'; uci: string; ply: number; lag: number } // ply: nước thứ mấy; lag: thời gian đường truyền đi về (ms)
   | { t: 'resign' } // đầu hàng (chưa ai đi quá một nước thì là huỷ ván)
+  | { t: 'claim' } // ván không tính giờ, đối thủ rời phòng quá CLAIM_AFTER: nhận thắng (chưa ai đi quá một nước thì huỷ ván)
   | { t: 'draw'; yes: boolean } // xin hòa, đồng ý hòa; `yes: false` là từ chối hoặc rút lời xin
   | { t: 'takeback'; yes: boolean } // xin đi lại, đồng ý cho đi lại; `yes: false` là từ chối hoặc rút lời xin
   | { t: 'rematch'; yes: boolean } // xin tái đấu, đồng ý tái đấu; `yes: false` là từ chối hoặc rút lời mời

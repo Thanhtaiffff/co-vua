@@ -291,7 +291,25 @@ const replaced = await a.until((m) => m.t === 'error', 'tab cũ nhất bị ng�
 if (replaced.code !== 'replaced') fail('tab cũ nhất nhận sai thư: ' + JSON.stringify(replaced))
 console.log('Tab thứ 5 của một người: tab cũ nhất bị ngắt')
 
-for (const c of [a, b, back, late, ...crowd, ...tabs]) c.ws.close()
+// Ván không tính giờ: bạn bè đóng hết tab thì chủ phòng thấy đếm ngược nhận thắng; nhận sớm thì không được;
+// bạn bè quay lại thì thôi đếm.
+const hostTab = tabs[tabs.length - 1]
+let claimMark = hostTab.states.length
+b.ws.close()
+back.ws.close()
+const gone = await next(hostTab, claimMark, (m) => m.t === 'state' && m.room.game.claimIn !== null, 'thấy bạn bè rời ván')
+if (gone.room.game.claimIn < 50_000 || gone.room.game.claimIn > 60_000) fail('đếm ngược nhận thắng sai: ' + gone.room.game.claimIn)
+claimMark = hostTab.states.length
+await hostTab.send({ t: 'claim' })
+const tooSoon = await next(hostTab, claimMark, (m) => m.t === 'state', 'nhận thắng sớm')
+if (tooSoon.room.game.status.kind !== 'playing') fail('chưa đủ 1 phút mà đã nhận thắng được')
+claimMark = hostTab.states.length
+const returned = player(room2)
+await returned.send({ t: 'hello', token: limitsGuest })
+await next(hostTab, claimMark, (m) => m.t === 'state' && m.room.game.claimIn === null, 'bạn bè quay lại thì thôi đếm')
+console.log(`Bạn bè rời ván không tính giờ: chủ phòng thấy đếm ngược ${Math.round(gone.room.game.claimIn / 1000)} giây, nhận sớm không được, quay lại thì thôi`)
+
+for (const c of [a, b, back, returned, late, ...crowd, ...tabs]) c.ws.close()
 
 // Người gác cửa: một mạng tạo liền được 20 phòng (mạng này đã tạo 2 phòng ở trên), phòng thứ 21 bị từ chối;
 // mạng khác vẫn tạo được bình thường.
