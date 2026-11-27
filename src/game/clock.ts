@@ -92,7 +92,14 @@ export function recordMove(clock: ClockState, mover: Color, now: number, credit 
 
 // Đi lại thì đồng hồ cũng quay về như lúc trước nước đó, rồi chạy tiếp từ bây giờ.
 export function undoMove(clock: ClockState, now: number): ClockState {
-  return { ...clock, times: clock.times.slice(0, -1), spent: clock.spent.slice(0, -1), turnStart: now }
+  return rewindClock(clock, clock.spent.length - 1, now)
+}
+
+// Quay đồng hồ về như lúc ngay sau nước thứ `ply` (bỏ các nước sau đó), rồi chạy tiếp từ bây giờ.
+// Dùng khi đi một nước mới từ thế cờ đang xem lại.
+export function rewindClock(clock: ClockState, ply: number, now: number): ClockState {
+  const keep = Math.max(0, ply)
+  return { ...clock, times: clock.times.slice(0, keep), spent: clock.spent.slice(0, keep), turnStart: now }
 }
 
 // Dưới mức này đồng hồ chuyển màu đỏ: 1/8 thời gian ban đầu, trong khoảng 10 giây tới 1 phút (giống lichess).
