@@ -80,7 +80,7 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
   Bấm nút nốt nhạc góc trên để mở bảng chọn: chạm một bộ là nghe thử một đoạn ngắn (đi quân, ăn quân, chiếu, thắng) và dùng luôn bộ đó; hàng nút cuối bảng cho nghe riêng từng tiếng. Dòng đầu bảng là **Theo chủ đề** (mặc định): tiếng tự đổi theo bộ quân đang dùng (quân Thép thì tiếng Thép, quân Cổ điển thì tiếng Gỗ). Chọn một bộ tiếng cụ thể là tiếng giữ nguyên bộ đó, đổi quân không đụng tới. Nút loa bên cạnh để tắt/bật. Máy nào nhớ lựa chọn của máy đó. iPhone gạt sang chế độ im lặng thì web cũng im.
 - Danh sách nước đi kiểu ký hiệu cờ (e4, Nf3, O-O…), quân đã ăn và chênh lệch điểm quân.
 - Đặt tên hai người chơi trước ván (nút giữa để đổi màu cho hai người); để trống thì thanh người chơi chỉ có hình con tốt, còn lời báo ("Tới lượt Trắng", "Đen thắng") gọi theo màu quân.
-- Đi lại (đồng hồ, thời gian nghĩ cũng lùi theo), ván mới (bấm hai lần để chắc chắn), tự xoay bàn theo lượt (bật thì nút Lật bàn tạm khoá).
+- Không có nút đi lại: lùi về nước nào (nút mũi tên, phím ←, bấm vào nước đó) là đi tiếp được ngay từ thế cờ đó, các nước sau bị bỏ (đồng hồ, thời gian nghĩ cũng lùi theo). Ván mới (bấm hai lần để chắc chắn), tự xoay bàn theo lượt (bật thì nút Lật bàn tạm khoá).
 - Tải lại trang vẫn giữ ván đang chơi.
 - Giao diện sáng/tối theo máy, dùng tốt trên điện thoại.
 

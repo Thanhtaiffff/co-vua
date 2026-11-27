@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_CONTROL, flagTime, formatClock, formatSpan, formatThink, lastTimes, lowTime, newClock, recordMove, restoreClock, undoMove } from './clock'
+import { DEFAULT_CONTROL, flagTime, formatClock, formatSpan, formatThink, lastTimes, lowTime, newClock, recordMove, restoreClock, rewindClock, undoMove } from './clock'
 
 const BLITZ = { minutes: 3, increment: 2 }
 
@@ -41,6 +41,19 @@ describe('đồng hồ chạy', () => {
     expect(lastTimes(clock)).toEqual({ w: 180_000, b: 180_000 })
     expect(flagTime(clock, 'b')).toBe(60_000 + 180_000)
     expect(flagTime(undoMove(clock, 70_000), 'w')).toBeNull()
+  })
+
+  it('đi nước mới từ thế cờ đang xem lại: đồng hồ quay về như lúc đó, bỏ các nước sau', () => {
+    let clock = recordMove(newClock(BLITZ), 'w', 0)
+    clock = recordMove(clock, 'b', 10_000) // Đen nghĩ 10 giây
+    clock = recordMove(clock, 'w', 30_000) // Trắng nghĩ 20 giây
+    clock = recordMove(clock, 'b', 35_000)
+    clock = rewindClock(clock, 2, 90_000) // xem lại thế cờ sau nước 2, Trắng đi từ đó
+    expect(clock.spent).toEqual([null, 10_000])
+    expect(lastTimes(clock)).toEqual({ w: 180_000, b: 172_000 })
+    clock = recordMove(clock, 'w', 95_000)
+    expect(lastTimes(clock)).toEqual({ w: 177_000, b: 172_000 })
+    expect(rewindClock(clock, 0, 99_000).spent).toEqual([])
   })
 
   it('không tính giờ thì không có đồng hồ', () => {

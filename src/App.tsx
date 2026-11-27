@@ -17,7 +17,7 @@ import { TimeControlPicker } from './components/TimeControlPicker'
 import { TopBar } from './components/TopBar'
 import { describeGame, useFeedbackGame } from './feedback/context'
 import { PageFoot } from './feedback/FeedbackForm'
-import { controlLabel, flagTime, lastTimes, lowTime, newClock, recordMove, restoreClock, undoMove, type ClockState } from './game/clock'
+import { controlLabel, flagTime, lastTimes, lowTime, newClock, recordMove, restoreClock, rewindClock, type ClockState } from './game/clock'
 import {
   capturedPieces,
   describeMove,
@@ -61,7 +61,8 @@ export default function App() {
   const [names, setNames] = useState<Names>(() => restoreNames(loadSaved<unknown>('names', null)))
   const [autoFlip, setAutoFlip] = useState<boolean>(() => loadSaved('autoFlip', false))
   const [orientation, setOrientation] = useState<'white' | 'black'>('white')
-  const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null)
+  // `ply`: nước phong cấp đi từ thế cờ sau nước thứ mấy (có thể là thế cờ đang xem lại).
+  const [promotion, setPromotion] = useState<{ from: Square; to: Square; ply: number } | null>(null)
   const [confirmNew, setConfirmNew] = useState(false)
 
   const chess = useMemo(() => replay(moves), [moves])
@@ -73,8 +74,7 @@ export default function App() {
   const now = useNow(flagAt)
   const status = flagAt !== null && now >= flagAt ? timeoutStatus(chess, turn) : boardStatus
   const over = status.kind !== 'playing'
-  const check = status.kind === 'playing' && status.check
-  const picking = promotion !== null && !over
+  const picking = promotion !== null
   const boardSide = autoFlip ? SIDE[turn] : orientation
   const bottom: Color = boardSide === 'white' ? 'w' : 'b'
   const top: Color = bottom === 'w' ? 'b' : 'w'
@@ -86,6 +86,9 @@ export default function App() {
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
   const captured = capturedPieces(shownChess)
+  // Dòng báo lượt: đang xem thế cờ cũ thì báo theo thế cờ đó, vì đi được ngay từ đó.
+  const shownStatus = review.reviewing ? gameStatus(shownChess) : status
+  const shownCheck = shownStatus.kind === 'playing' && shownStatus.check
   const material = materialDiff(shownChess)
   // Máy phân tích ván: chỉ mở khi ván đã xong.
   const analysis = useGameReview(over ? moves : null)
@@ -136,8 +139,8 @@ export default function App() {
   const config = useMemo<Config>(() => {
     // Đang chọn quân phong cấp: giữ nguyên bàn (tốt đứng ở ô cuối), khoá không cho đi.
     if (picking) return { orientation: boardSide, movable: { color: undefined, dests: new Map() } }
-    // Đang xem lại thế cờ cũ, hay ván đã xong: chỉ xem, không đi được.
-    const locked = over || review.reviewing
+    // Ván đã xong thì chỉ xem. Đang xem lại thế cờ cũ thì đi tiếp được ngay từ thế cờ đó (bỏ các nước sau).
+    const locked = over && !review.reviewing
     const last = shownChess.history({ verbose: true }).at(-1)
     return {
       fen: shownChess.fen(),
@@ -176,40 +179,39 @@ export default function App() {
     showBoard()
   }
 
-  // Đi một nước: ghi nước đi, thời gian nghĩ và giờ của bên vừa đi. Lỡ hết giờ rồi thì không nhận nước đó nữa.
-  function play(move: PlayedMove) {
+  // Đi một nước từ thế cờ sau nước thứ `ply`: ghi nước đi, thời gian nghĩ và giờ của bên vừa đi.
+  // `ply` nhỏ hơn số nước (đang xem lại thế cờ cũ) thì thay cho nút Đi lại: bỏ các nước sau, đồng hồ quay về
+  // như lúc đó rồi mới ghi nước mới. Đi tiếp ở thế cờ hiện tại mà lỡ hết giờ rồi thì không nhận nước đó nữa.
+  function play(move: PlayedMove, ply: number) {
     const time = Date.now()
-    if (flagAt !== null && time >= flagAt) return
-    playMove(describeMove(chess, move))
-    setMoves((prev) => [...prev, move])
-    setClock((prev) => recordMove(prev, turn, time))
+    const rewind = ply < moves.length
+    if (!rewind && flagAt !== null && time >= flagAt) return
+    const from = rewind ? replay(moves.slice(0, ply)) : chess
+    playMove(describeMove(from, move))
+    setMoves((prev) => [...prev.slice(0, ply), move])
+    review.reset()
+    setClock((prev) => recordMove(rewind ? rewindClock(prev, ply, time) : prev, from.turn(), time))
   }
 
   function handleMove(from: Key, to: Key) {
     const move = { from: from as Square, to: to as Square }
-    if (isPromotion(chess, move.from, move.to)) {
-      setPromotion(move)
+    if (isPromotion(shownChess, move.from, move.to)) {
+      setPromotion({ ...move, ply: review.shown })
       return
     }
-    play(move)
+    play(move, review.shown)
   }
 
   function pickPromotion(type: PieceSymbol) {
     if (!promotion) return
-    play({ ...promotion, promotion: type })
+    const { ply, ...move } = promotion
+    play({ ...move, promotion: type }, ply)
     setPromotion(null)
   }
 
   // Bỏ phong cấp: bàn cờ tự vẽ lại thế cờ cũ, tốt quay về chỗ.
   function cancelPromotion() {
     setPromotion(null)
-  }
-
-  // Đi lại nước vừa đi (bấm nhầm): ván, đồng hồ, thời gian nghĩ quay về như trước nước đó.
-  function undo() {
-    setPromotion(null)
-    setMoves((prev) => prev.slice(0, -1))
-    setClock((prev) => undoMove(prev, Date.now()))
   }
 
   // Dòng lớn ở bảng kết quả nổi trên bàn cờ.
@@ -261,7 +263,7 @@ export default function App() {
           />
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
-            {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={cancelPromotion} />}
+            {picking && <PromotionPicker color={shownChess.turn()} onPick={pickPromotion} onCancel={cancelPromotion} />}
             <EndFx
               event={endFx}
               end={over ? { winner } : undefined}
@@ -312,14 +314,17 @@ export default function App() {
             />
           ) : (
             <div
-              className={`status${check ? ' status--check' : ''}${check || review.reviewing ? '' : ' status--plain'}`}
+              className={`status${shownCheck ? ' status--check' : ''}${shownCheck || review.reviewing ? '' : ' status--plain'}`}
               role="status"
             >
-              <span className="status__text">{statusText(status, name)}</span>
+              <span className="status__text">
+                {/* Đang xem thế cờ cũ thì báo lượt của thế cờ đó: đi được ngay từ đó. */}
+                {statusText(shownStatus, name)}
+              </span>
               {clock.control && <span className="status__meta">{controlLabel(clock.control)}</span>}
               {review.reviewing && (
                 <span className="status__hint">
-                  Đang xem lại thế cờ cũ.{' '}
+                  Đi ở đây sẽ bỏ các nước sau.{' '}
                   <button type="button" className="link-button" onClick={() => review.go(moves.length)}>
                     Về ván đang chơi
                   </button>
@@ -339,7 +344,6 @@ export default function App() {
 
           {/* Nút chỉ có hình, rê chuột vào mới hiện chữ. Hết ván thì Ván mới là nút chữ to cho dễ thấy. */}
           <div className="actions">
-            <ActionButton icon="undo" label="Đi lại" onClick={undo} disabled={moves.length === 0} />
             {over ? (
               <button type="button" className="btn btn--primary actions__wide" onClick={newGame}>
                 Ván mới
