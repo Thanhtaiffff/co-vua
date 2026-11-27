@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AnalyseOptions, Engine } from '../engine/stockfish'
-import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloPlan, ELO_MAX, ELO_MIN, ELO_STEP, fromUci, toUci } from './levels'
+import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, eloPlan, ELO_MAX, ELO_MIN, ELO_STEP, fromUci, isImpossible, tierName, toUci } from './levels'
 
 // Máy giả: ghi lại câu hỏi, trả về nước định sẵn.
 function fakeEngine(bestmove: string | null, others: string[] = []) {
@@ -18,22 +18,38 @@ function fakeEngine(bestmove: string | null, others: string[] = []) {
 const steps = Array.from({ length: (ELO_MAX - ELO_MIN) / ELO_STEP + 1 }, (_, i) => ELO_MIN + i * ELO_STEP)
 
 describe('mức Elo', () => {
-  it('thanh trượt đi từ 250 tới 3200, mỗi nấc 50', () => {
-    expect(steps[0]).toBe(250)
-    expect(steps.at(-1)).toBe(3200)
+  it('thanh trượt đi từ 200 tới 3100 rồi tới Impossible, mỗi nấc 100', () => {
+    expect(steps[0]).toBe(200)
+    expect(steps.at(-2)).toBe(3100)
+    expect(steps.at(-1)).toBe(ELO_MAX)
     expect(clampElo(1012)).toBe(1000)
-    expect(clampElo(1030)).toBe(1050)
-    expect(clampElo(-5)).toBe(250)
-    expect(clampElo(9999)).toBe(3200)
+    expect(clampElo(1050)).toBe(1100)
+    expect(clampElo(-5)).toBe(200)
+    expect(clampElo(9999)).toBe(ELO_MAX)
     expect(clampElo(Number.NaN)).toBe(DEFAULT_ELO)
   })
 
-  it('từ 1320 trở lên dùng núm Elo của Stockfish, nấc cao nhất là sức tối đa', () => {
+  it('mỗi khoảng Elo có tên cấp độ, nấc cuối là Impossible', () => {
+    expect(tierName(200)).toBe('Dễ')
+    expect(tierName(700)).toBe('Dễ')
+    expect(tierName(800)).toBe('Trung bình')
+    expect(tierName(1400)).toBe('Khá')
+    expect(tierName(1900)).toBe('Giỏi')
+    expect(tierName(2400)).toBe('Cao thủ')
+    expect(tierName(3100)).toBe('Cao thủ')
+    expect(tierName(ELO_MAX)).toBe('Impossible')
+    expect(isImpossible(3100)).toBe(false)
+    expect(eloLabel(1500)).toBe('1500')
+    expect(eloLabel(ELO_MAX)).toBe('3400+')
+  })
+
+  it('từ 1320 trở lên dùng núm Elo của Stockfish, Impossible không bó sức và nghĩ lâu nhất', () => {
     expect(eloPlan(1300).elo).toBeUndefined()
-    expect(eloPlan(1350)).toMatchObject({ elo: 1350, mistake: 0, blunder: 0 })
-    expect(eloPlan(3150).elo).toBe(3150)
-    expect(eloPlan(3200).elo).toBeUndefined()
-    expect(eloPlan(3200)).toMatchObject({ skill: 20, mistake: 0, blunder: 0 })
+    expect(eloPlan(1400)).toMatchObject({ elo: 1400, mistake: 0, blunder: 0 })
+    expect(eloPlan(3100).elo).toBe(3100)
+    expect(eloPlan(ELO_MAX).elo).toBeUndefined()
+    expect(eloPlan(ELO_MAX)).toMatchObject({ skill: 20, mistake: 0, blunder: 0 })
+    expect(eloPlan(ELO_MAX).movetime).toBeGreaterThan(eloPlan(3100).movetime)
   })
 
   it('Elo càng cao máy càng ít sai, nhìn càng sâu, nghĩ càng lâu', () => {
@@ -46,7 +62,7 @@ describe('mức Elo', () => {
       if (weaker.depth && stronger.depth) expect(stronger.depth).toBeGreaterThanOrEqual(weaker.depth)
       if (weaker.elo && stronger.elo) expect(stronger.elo).toBeGreaterThan(weaker.elo)
     }
-    expect(eloPlan(250).blunder).toBeGreaterThan(0.3)
+    expect(eloPlan(200).blunder).toBeGreaterThan(0.3)
     expect(eloPlan(1300).blunder).toBe(0)
   })
 
@@ -66,16 +82,16 @@ describe('máy chọn nước', () => {
     expect(calls[0].options).toMatchObject({ moves: ['e2e4', 'e7e5', 'g1f3'], elo: 1800 })
   })
 
-  it('nấc cao nhất không bó sức máy', async () => {
+  it('Impossible không bó sức máy', async () => {
     const { engine, calls } = fakeEngine('e2e4')
-    await botMove(engine, [], 3200, undefined, () => 0.99)
+    await botMove(engine, [], ELO_MAX, undefined, () => 0.99)
     expect(calls[0].options.skill).toBe(20)
     expect(calls[0].options.elo).toBeUndefined()
   })
 
   it('mức thấp đôi khi đi bừa một nước hợp lệ, không hỏi máy', async () => {
     const { engine, calls } = fakeEngine('e2e4')
-    const move = await botMove(engine, [], 250, undefined, () => 0)
+    const move = await botMove(engine, [], 200, undefined, () => 0)
     expect(calls).toHaveLength(0)
     expect(move).toMatch(/^[a-h][1-8][a-h][1-8]$/)
   })

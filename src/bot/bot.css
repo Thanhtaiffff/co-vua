@@ -7,12 +7,32 @@
   gap: 12px;
 }
 
-/* Sức của máy: số Elo to, dưới là thanh kéo và hai nút − +. */
+/* Cấp độ của máy: số Elo to kèm tên cấp độ, dưới là thanh kéo và hai nút − +. */
 .elo {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+}
+
+.elo__readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.elo__tier {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Nấc Impossible: tên cấp độ đổi màu đỏ cho thấy đây là mức "không thể thắng". */
+.elo--max .elo__tier {
+  color: var(--danger-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .elo__value {

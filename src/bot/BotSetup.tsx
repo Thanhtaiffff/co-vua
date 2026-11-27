@@ -1,10 +1,10 @@
-// Bảng chọn trước ván chơi với máy: sức của máy (số Elo, thanh trượt như chess.com), màu quân, thời gian. Ít chữ.
+// Bảng chọn trước ván chơi với máy: cấp độ của máy (số Elo + tên cấp độ, thanh trượt như chess.com), màu quân, thời gian.
 import type { CSSProperties } from 'react'
 import type { Color } from 'chess.js'
 import { Piece } from '../components/Piece'
 import { TimeControlPicker } from '../components/TimeControlPicker'
 import { controlLabel, type TimeControl } from '../game/clock'
-import { clampElo, ELO_MAX, ELO_MIN, ELO_STEP } from './levels'
+import { clampElo, eloLabel, ELO_MAX, ELO_MIN, ELO_STEP, isImpossible, tierName } from './levels'
 
 export type ColorChoice = Color | 'random'
 
@@ -39,15 +39,20 @@ function ColorBadge({ color }: { color: ColorChoice }) {
   )
 }
 
-// Số Elo to ở giữa, dưới là thanh kéo, hai bên có nút − + để chỉnh từng nấc (trên điện thoại kéo khó dừng đúng số).
+// Số Elo to ở giữa kèm tên cấp độ, dưới là thanh kéo, hai bên có nút − + để chỉnh từng nấc (trên điện thoại kéo khó dừng đúng số).
 function EloSlider({ value, onChange }: { value: number; onChange: (elo: number) => void }) {
   const percent = ((value - ELO_MIN) / (ELO_MAX - ELO_MIN)) * 100
   const nudge = (by: number) => onChange(clampElo(value + by))
+  const label = eloLabel(value)
+  const tier = tierName(value)
   return (
-    <div className="elo">
-      <output className="elo__value" htmlFor="bot-elo" aria-live="polite">
-        {value}
-        <span className="elo__unit">Elo</span>
+    <div className={`elo${isImpossible(value) ? ' elo--max' : ''}`}>
+      <output className="elo__readout" htmlFor="bot-elo" aria-live="polite">
+        <span className="elo__value">
+          {label}
+          <span className="elo__unit">Elo</span>
+        </span>
+        <span className="elo__tier">{tier}</span>
       </output>
       <div className="elo__row">
         <button type="button" className="elo__step" aria-label="Yếu hơn" disabled={value <= ELO_MIN} onClick={() => nudge(-ELO_STEP)}>
@@ -64,7 +69,7 @@ function EloSlider({ value, onChange }: { value: number; onChange: (elo: number)
           step={ELO_STEP}
           value={value}
           aria-labelledby="bot-level-title"
-          aria-valuetext={`${value} Elo`}
+          aria-valuetext={`${tier}, ${label} Elo`}
           style={{ '--fill': `${percent}%` } as CSSProperties}
           onChange={(event) => onChange(clampElo(Number(event.target.value)))}
         />
@@ -83,7 +88,7 @@ export function BotSetup({ elo, onElo, color, onColor, control, onControl, onSta
     <div className="bot-setup">
       <div className="card" role="group" aria-labelledby="bot-level-title">
         <p className="card__heading" id="bot-level-title">
-          Sức của máy
+          Cấp độ của máy
         </p>
         <EloSlider value={elo} onChange={onElo} />
       </div>

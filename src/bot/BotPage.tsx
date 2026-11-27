@@ -40,7 +40,7 @@ import { showBoard, useReview } from '../useReview'
 import { playReviewStep } from '../reviewSound'
 import './bot.css'
 import { BotSetup, type ColorChoice } from './BotSetup'
-import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, fromUci, toUci } from './levels'
+import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, fromUci, isImpossible, tierName, toUci } from './levels'
 
 const SIDE: Record<Color, 'white' | 'black'> = { w: 'white', b: 'black' }
 const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
@@ -131,7 +131,7 @@ export function BotPage() {
   const top = other(bottom)
   const boardSide = SIDE[bottom]
   const yourName = myName().trim()
-  const botName = `Máy · ${botElo}`
+  const botName = isImpossible(botElo) ? 'Máy · Impossible' : `Máy · ${tierName(botElo)} ${eloLabel(botElo)}`
   const name = useCallback((color: Color) => (color === you ? yourName || 'Bạn' : botName), [you, yourName, botName])
 
   const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
@@ -342,7 +342,7 @@ export function BotPage() {
   }
 
   const feedbackState = game ? describeGame(result, clock.control) : 'chưa bắt đầu'
-  const feedbackGame = useMemo(() => ({ sans, side: boardSide, state: `chơi với máy ${botElo} Elo, ${feedbackState}` }), [sans, boardSide, botElo, feedbackState])
+  const feedbackGame = useMemo(() => ({ sans, side: boardSide, state: `chơi với máy ${tierName(botElo)} ${eloLabel(botElo)} Elo, ${feedbackState}` }), [sans, boardSide, botElo, feedbackState])
   useFeedbackGame(feedbackGame)
 
   const statusLine = engineError

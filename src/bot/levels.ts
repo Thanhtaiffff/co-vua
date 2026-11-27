@@ -1,6 +1,7 @@
-// Sức của máy khi chơi với máy, chọn bằng số Elo trên thanh trượt (như mục "Engine" của chess.com: 250..3200).
+// Cấp độ của máy khi chơi với máy, chọn bằng thanh trượt Elo (như mục "Engine" của chess.com): 200..3100, mỗi nấc 100,
+// nấc cuối cùng là Impossible (máy đánh hết sức, nghĩ lâu hơn). Mỗi khoảng Elo có tên cấp độ (Dễ, Trung bình...).
 // Stockfish mạnh hơn mọi người chơi, nên phải "bó tay" máy lại:
-// - Từ 1320 Elo trở lên: dùng núm UCI_Elo có sẵn của Stockfish (nó chỉ nhận 1320..3190). Nấc cao nhất 3200 = sức tối đa.
+// - Từ 1320 Elo trở lên: dùng núm UCI_Elo có sẵn của Stockfish (nó chỉ nhận 1320..3190).
 // - Dưới 1320: máy ở trình độ yếu nhất (Skill Level 0), nhìn trước ít nước, và thỉnh thoảng cố tình chọn nước kém:
 //   + "nước kém": một nước khác trong mấy nước máy nghĩ ra (giống người chơi kém: thấy nước nhưng chọn sai);
 //   + "đi bừa": một nước hợp lệ bất kỳ (chỉ hay gặp ở mức rất thấp, để người mới tập thắng được).
@@ -9,10 +10,39 @@
 import { Chess, type Move } from 'chess.js'
 import { ENGINE_ELO_MAX, ENGINE_ELO_MIN, type Analysis, type Engine } from '../engine/stockfish'
 
-export const ELO_MIN = 250
+export const ELO_MIN = 200
+export const ELO_STEP = 100
+// Nấc cuối thanh trượt: Impossible. Giá trị chỉ để đánh dấu, ngoài màn hình hiện IMPOSSIBLE_LABEL.
 export const ELO_MAX = 3200
-export const ELO_STEP = 50
+export const IMPOSSIBLE_LABEL = '3400+'
 export const DEFAULT_ELO = 1000
+
+// Nấc cao nhất còn dưới khoảng Stockfish tự bó sức được.
+const WEAK_TOP = Math.floor((ENGINE_ELO_MIN - 1 - ELO_MIN) / ELO_STEP) * ELO_STEP + ELO_MIN
+
+// Tên cấp độ theo khoảng Elo: mỗi cấp tính từ `from` trở lên.
+export const TIERS = [
+  { from: ELO_MIN, name: 'Dễ' },
+  { from: 800, name: 'Trung bình' },
+  { from: 1400, name: 'Khá' },
+  { from: 1900, name: 'Giỏi' },
+  { from: 2400, name: 'Cao thủ' },
+  { from: ELO_MAX, name: 'Impossible' },
+] as const
+
+export function isImpossible(elo: number): boolean {
+  return clampElo(elo) >= ELO_MAX
+}
+
+export function tierName(elo: number): string {
+  const value = clampElo(elo)
+  return [...TIERS].reverse().find((tier) => value >= tier.from)!.name
+}
+
+// Số Elo để hiện ra (nấc Impossible hiện 3400+).
+export function eloLabel(elo: number): string {
+  return isImpossible(elo) ? IMPOSSIBLE_LABEL : String(clampElo(elo))
+}
 
 // Cách máy nghĩ ở một mức Elo.
 export type EloPlan = {
@@ -34,14 +64,15 @@ export function clampElo(value: number): number {
 
 export function eloPlan(rawElo: number): EloPlan {
   const elo = clampElo(rawElo)
-  if (elo >= ENGINE_ELO_MAX) return { skill: 20, movetime: 1500, multipv: 1, mistake: 0, blunder: 0 }
+  // Impossible: không bó gì cả, nghĩ 3 giây mỗi nước.
+  if (elo >= ELO_MAX) return { skill: 20, movetime: 3000, multipv: 1, mistake: 0, blunder: 0 }
   if (elo >= ENGINE_ELO_MIN) {
     // Mạnh hơn thì cho nghĩ lâu hơn một chút (0,4 giây tới 1,2 giây).
-    const t = (elo - ENGINE_ELO_MIN) / (ENGINE_ELO_MAX - ENGINE_ELO_MIN)
+    const t = (Math.min(elo, ENGINE_ELO_MAX) - ENGINE_ELO_MIN) / (ENGINE_ELO_MAX - ENGINE_ELO_MIN)
     return { elo, skill: 20, movetime: Math.round(400 + 800 * t), multipv: 1, mistake: 0, blunder: 0 }
   }
-  // weak: 0 ở 1300 (gần mức Stockfish tự làm được), 1 ở 250 (yếu nhất).
-  const weak = (ENGINE_ELO_MIN - 20 - elo) / (ENGINE_ELO_MIN - 20 - ELO_MIN)
+  // weak: 0 ở 1300 (gần mức Stockfish tự làm được), 1 ở 200 (yếu nhất).
+  const weak = (WEAK_TOP - elo) / (WEAK_TOP - ELO_MIN)
   return {
     skill: 0,
     depth: Math.max(1, Math.round(1 + 7 * (1 - weak))),
