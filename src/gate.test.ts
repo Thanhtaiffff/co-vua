@@ -5,7 +5,7 @@ const MINUTE = 60 * 1000
 const HOUR = 60 * MINUTE
 
 // Gọi `allow` liền `times` lần, trả về các kết quả.
-function burst(keeper: Gatekeeper, kind: 'room' | 'feedback', who: string, times: number, now = 0) {
+function burst(keeper: Gatekeeper, kind: 'room' | 'feedback' | 'join', who: string, times: number, now = 0) {
   return Array.from({ length: times }, () => keeper.allow(kind, who, now))
 }
 
@@ -64,6 +64,20 @@ describe('Gatekeeper', () => {
     expect(buckets.size).toBe(52)
     keeper.allow('room', 'mạng mới', 61 * MINUTE)
     expect([...buckets.keys()].sort()).toEqual(['room:*', 'room:mạng mới'])
+  })
+})
+
+describe('nối vào phòng', () => {
+  it('người chơi mạng chập chờn nối lại mỗi 5 giây suốt một giờ vẫn không bị chặn', () => {
+    const keeper = new Gatekeeper()
+    for (let at = 0; at < HOUR; at += 5000) expect(keeper.allow('join', 'a', at)).toBe('ok')
+  })
+
+  it('dò mã phòng bừa: quá 120 lần liền thì bị chặn, mạng khác vẫn nối được', () => {
+    const keeper = new Gatekeeper()
+    expect(burst(keeper, 'join', 'a', 121)).toEqual([...Array(120).fill('ok'), 'slow'])
+    expect(keeper.allow('join', 'b', 0)).toBe('ok')
+    expect(keeper.allow('room', 'a', 0)).toBe('ok')
   })
 })
 

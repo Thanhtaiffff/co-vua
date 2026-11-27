@@ -452,6 +452,12 @@ textarea,
   font-weight: 600;
 }
 
+/* Chữ nằm thẳng trên nền trang (không có khối nổi lót dưới): quầng mờ cùng màu nền cho chữ không lẫn vào hoa văn nền
+   (lỗ ty của Bê tông kính từng đè lên tên máy ở màn hình 360 px). */
+.player__line {
+  text-shadow: var(--bare-text-halo, none);
+}
+
 .player__turn {
   color: var(--led);
 }

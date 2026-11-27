@@ -512,7 +512,10 @@ export function BotPage() {
             </>
           )}
 
-          <p className="credits">Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
+          <p className="credits">
+            Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com. Số Elo của máy là ước
+            lượng, có thể lệch so với Elo người chơi trên chess.com.
+          </p>
         </aside>
       </main>
       <PageFoot />

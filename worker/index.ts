@@ -5,7 +5,7 @@
 //   POST /api/feedback       gửi một góp ý (ai cũng gửi được, có giới hạn lượt); máy chủ đưa nó thành Issue trên GitHub
 // Tạo phòng và gửi góp ý phải qua "người gác cửa" (worker/gate.ts) trước: mạng nào gửi dồn dập thì bị từ chối (429).
 import { BODY_MAX, parseFeedback } from '../src/feedback/feedback'
-import { networkOf, type GateKind } from '../src/gate'
+import { Gatekeeper, networkOf, type GateKind } from '../src/gate'
 import { newRoomId, ROOM_ID, type CreateResponse } from '../src/online/protocol'
 import { parseCreateRequest } from '../src/online/room'
 import type { Env } from './room-server'
@@ -103,12 +103,21 @@ async function sendFeedback(request: Request, env: Env, ctx: ExecutionContext): 
   return json({ ok: true }, 201)
 }
 
+// Đếm lượt nối vào phòng theo mạng, ngay trong bộ nhớ của worker (mỗi máy chủ Cloudflare một bộ đếm riêng, đủ để chặn
+// kẻ dò mã phòng bừa từ một mạng; người chơi thật không bao giờ chạm mức này).
+const joins = new Gatekeeper()
+
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     const { pathname } = new URL(request.url)
     if (pathname === '/api/rooms' && request.method === 'POST') return createRoom(request, env)
     const socket = /^\/api\/rooms\/([^/]+)\/ws$/.exec(pathname)
-    if (socket && ROOM_ID.test(socket[1])) return env.ROOMS.get(env.ROOMS.idFromName(socket[1])).fetch(request)
+    if (socket && ROOM_ID.test(socket[1])) {
+      if (joins.allow('join', networkOf(request.headers.get('CF-Connecting-IP') ?? ''), Date.now()) !== 'ok') {
+        return json({ error: 'slow' }, 429)
+      }
+      return env.ROOMS.get(env.ROOMS.idFromName(socket[1])).fetch(request)
+    }
     if (pathname === '/api/feedback' && request.method === 'POST') return sendFeedback(request, env, ctx)
     return json({ error: 'Không có địa chỉ này' }, 404)
   },

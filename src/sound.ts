@@ -70,28 +70,34 @@ async function read(url: string): Promise<ArrayBuffer> {
     return Uint8Array.from(text, (c) => c.charCodeAt(0)).buffer
   }
   const response = await fetch(url)
+  if (!response.ok) throw new Error(`Không tải được ${url}`)
   return response.arrayBuffer()
 }
 
 // Đọc cả bộ `set` cho sẵn sàng phát. Chưa có bộ phát (chưa chạm vào trang) thì để lúc mở khoá mới đọc.
+// Tiếng nào đọc hỏng (mạng chập chờn) thì lần sau cần tới tiếng đó sẽ đọc lại, chỉ đọc lại những tiếng còn thiếu.
 function load(set: SoundSet): Promise<void> {
   const audio = ctx
   if (!audio) return Promise.resolve()
   let done = loading.get(set)
   if (!done) {
-    const ready = new Map<SoundName, AudioBuffer>()
+    const ready = buffers.get(set) ?? new Map<SoundName, AudioBuffer>()
     buffers.set(set, ready)
+    let failed = false
     done = Promise.all(
       SOUND_NAMES.map(async (name) => {
         const url = soundUrl(set, name)
-        if (!url) return
+        if (!url || ready.has(name)) return
         try {
           ready.set(name, await audio.decodeAudioData(await read(url)))
         } catch {
-          // Máy không đọc được tiếng nào thì tiếng đó im, ván vẫn chơi bình thường.
+          // Tiếng này tạm im, ván vẫn chơi bình thường; lần sau đọc lại.
+          failed = true
         }
       }),
-    ).then(() => {})
+    ).then(() => {
+      if (failed) loading.delete(set)
+    })
     loading.set(set, done)
   }
   return done
@@ -136,6 +142,7 @@ export function setupSound(): () => void {
 // kẻo tiếng dồn lại rồi kêu một loạt khi bộ phát chạy tiếp.
 function start(set: SoundSet, name: SoundName, delay: number): AudioBufferSourceNode | null {
   const buffer = buffers.get(set)?.get(name)
+  if (ctx && !buffer && !loading.has(set)) void load(set)
   if (!ctx || !output || !buffer) return null
   if (ctx.state !== 'running' && performance.now() - lastTouch > 1000) return null
   const source = ctx.createBufferSource()

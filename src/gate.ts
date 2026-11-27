@@ -8,7 +8,7 @@
 // - cả web: `site` lần mỗi giờ, để lỡ có ai phá bằng nhiều mạng thì ván đang chơi vẫn chạy, chỉ tạm chưa tạo phòng mới được.
 import { PER_HOUR } from './feedback/feedback'
 
-export type GateKind = 'room' | 'feedback'
+export type GateKind = 'room' | 'feedback' | 'join'
 // ok: cho qua; slow: mạng này gửi dồn dập quá; busy: cả web đang quá nhiều.
 export type GateResult = 'ok' | 'slow' | 'busy'
 
@@ -19,6 +19,10 @@ export const GATE_RULES: Record<GateKind, Rule> = {
   room: { burst: 20, perHour: 20, site: 300 },
   // Khớp với giới hạn của hàng chờ góp ý (PER_HOUR mỗi mạng mỗi giờ); cả web 60 góp ý mỗi giờ là dư.
   feedback: { burst: PER_HOUR, perHour: PER_HOUR, site: 60 },
+  // Nối vào phòng (cả phòng không có thật): worker tự đếm trong bộ nhớ của nó, không hỏi người gác cửa chung (mỗi lần
+  // nối lại mạng đều qua đây, hỏi một chỗ chung thì chậm và nghẽn). Người chơi mạng chập chờn nối lại tối đa vài
+  // trăm lần mỗi giờ; kẻ dò mã phòng bừa bị chặn trước khi đánh thức máy chủ phòng (mỗi lần đánh thức tốn hạn mức).
+  join: { burst: 120, perHour: 1200, site: Number.MAX_SAFE_INTEGER },
 }
 
 const HOUR = 60 * 60 * 1000
