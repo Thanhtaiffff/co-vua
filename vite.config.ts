@@ -21,7 +21,7 @@ function appVersion(mode: string): string {
   return `${name[mode] ?? mode} ${time}`
 }
 
-// Bản một file: file .wasm của máy cờ (7,3 MB) nén gzip trước khi nhúng, cho trang nhẹ bớt khoảng 2 MB. Máy tự giải nén
+// Bản một file: file .wasm của máy cờ (1,8 MB) nén gzip trước khi nhúng, cho trang nhẹ bớt. Máy tự giải nén
 // lúc chạy (xem src/engine/stockfish.ts).
 function gzipWasm(): Plugin {
   return {

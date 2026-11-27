@@ -40,22 +40,31 @@ import { showBoard, useReview } from '../useReview'
 import { playReviewStep } from '../reviewSound'
 import './bot.css'
 import { BotSetup, type ColorChoice } from './BotSetup'
-import { botMove, BOT_LEVELS, DEFAULT_LEVEL, fromUci, levelInfo, toUci } from './levels'
+import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, fromUci, isImpossible, tierName, toUci } from './levels'
 
 const SIDE: Record<Color, 'white' | 'black'> = { w: 'white', b: 'black' }
 const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
 
-// Ván đang chơi: người chơi cầm màu nào, máy mức nào (chốt lúc bấm Chơi).
-type Game = { side: Color; level: number }
+// Ván đang chơi: người chơi cầm màu nào, máy bao nhiêu Elo (chốt lúc bấm Chơi).
+type Game = { side: Color; elo: number }
 
 // Máy đi nhanh quá thì trông như máy giật; mức thấp nghĩ rất nhanh nên chờ thêm cho tự nhiên.
 const MIN_THINK = 450
 const EXTRA_THINK = 600
 
 function savedGame(): Game | null {
-  const saved = loadSaved<Partial<Game> | null>('botGame', null)
-  if (!saved || (saved.side !== 'w' && saved.side !== 'b') || !BOT_LEVELS.some((l) => l.id === saved.level)) return null
-  return { side: saved.side, level: saved.level! }
+  const saved = loadSaved<{ side?: unknown; elo?: unknown; level?: unknown } | null>('botGame', null)
+  if (!saved || (saved.side !== 'w' && saved.side !== 'b')) return null
+  // Ván lưu từ hồi còn 6 nút mức thì đổi mức sang Elo.
+  const elo = typeof saved.elo === 'number' ? clampElo(saved.elo) : eloFromOldLevel(saved.level)
+  return elo === null ? null : { side: saved.side, elo }
+}
+
+// Elo đã chọn lần trước; chưa có thì lấy theo mức cũ (nếu từng chọn), không thì mặc định.
+function savedElo(): number {
+  const saved = loadSaved<unknown>('botElo', null)
+  if (typeof saved === 'number') return clampElo(saved)
+  return eloFromOldLevel(loadSaved<unknown>('botLevel', null)) ?? DEFAULT_ELO
 }
 
 function savedControl(): TimeControl | null {
@@ -78,7 +87,7 @@ export function BotPage() {
   })
   const [clock, setClock] = useState<ClockState>(() => restoreClock(loadSaved<unknown>('botClock', null), moves.length, Date.now()))
   const [resigned, setResigned] = useState<boolean>(() => loadSaved('botResigned', false))
-  const [level, setLevel] = useState<number>(() => levelInfo(loadSaved<number>('botLevel', DEFAULT_LEVEL)).id)
+  const [elo, setElo] = useState<number>(savedElo)
   const [colorChoice, setColorChoice] = useState<ColorChoice>(() => {
     const saved = loadSaved<unknown>('botColor', 'w')
     return saved === 'b' || saved === 'random' ? saved : 'w'
@@ -108,7 +117,7 @@ export function BotPage() {
   const turn = chess.turn()
   const you: Color = game?.side ?? (colorChoice === 'b' ? 'b' : 'w')
   const bot = other(you)
-  const botLevel = levelInfo(game?.level ?? level)
+  const botElo = game?.elo ?? elo
   const boardStatus = gameStatus(chess)
   const flagAt = game && boardStatus.kind === 'playing' ? flagTime(clock, turn) : null
   const now = useNow(flagAt)
@@ -122,7 +131,7 @@ export function BotPage() {
   const top = other(bottom)
   const boardSide = SIDE[bottom]
   const yourName = myName().trim()
-  const botName = `Máy · ${botLevel.name}`
+  const botName = isImpossible(botElo) ? 'Máy · Impossible' : `Máy · ${tierName(botElo)} ${eloLabel(botElo)}`
   const name = useCallback((color: Color) => (color === you ? yourName || 'Bạn' : botName), [you, yourName, botName])
 
   const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
@@ -135,7 +144,7 @@ export function BotPage() {
   useEffect(() => save('botMoves', moves), [moves])
   useEffect(() => save('botClock', clock), [clock])
   useEffect(() => save('botResigned', resigned), [resigned])
-  useEffect(() => save('botLevel', level), [level])
+  useEffect(() => save('botElo', elo), [elo])
   useEffect(() => save('botColor', colorChoice), [colorChoice])
   useEffect(() => save('botControl', control), [control])
 
@@ -207,7 +216,7 @@ export function BotPage() {
     const start = Date.now()
     const wait = MIN_THINK + Math.random() * EXTRA_THINK
     setThinking(true)
-    botMove(engine, uciMoves, botLevel, abort.signal)
+    botMove(engine, uciMoves, botElo, abort.signal)
       .then(async (uci) => {
         const left = wait - (Date.now() - start)
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, left))
@@ -224,7 +233,7 @@ export function BotPage() {
       abort.abort()
       setThinking(false)
     }
-  }, [botTurn, uciMoves, botLevel, engineError, retry])
+  }, [botTurn, uciMoves, botElo, engineError, retry])
 
   const config = useMemo<Config>(() => {
     if (picking) return { orientation: boardSide, movable: { color: undefined, dests: new Map() } }
@@ -280,7 +289,7 @@ export function BotPage() {
   // Bắt đầu ván theo lựa chọn đang chọn. Ngẫu nhiên thì bốc màu lúc này.
   function start() {
     const side: Color = colorChoice === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : colorChoice
-    setGame({ side, level })
+    setGame({ side, elo })
     setMoves([])
     setClock(newClock(control))
     setResigned(false)
@@ -333,7 +342,7 @@ export function BotPage() {
   }
 
   const feedbackState = game ? describeGame(result, clock.control) : 'chưa bắt đầu'
-  const feedbackGame = useMemo(() => ({ sans, side: boardSide, state: `chơi với máy mức ${botLevel.id}, ${feedbackState}` }), [sans, boardSide, botLevel.id, feedbackState])
+  const feedbackGame = useMemo(() => ({ sans, side: boardSide, state: `chơi với máy ${tierName(botElo)} ${eloLabel(botElo)} Elo, ${feedbackState}` }), [sans, boardSide, botElo, feedbackState])
   useFeedbackGame(feedbackGame)
 
   const statusLine = engineError
@@ -398,8 +407,8 @@ export function BotPage() {
         <aside className="side">
           {!game ? (
             <BotSetup
-              level={level}
-              onLevel={setLevel}
+              elo={elo}
+              onElo={setElo}
               color={colorChoice}
               onColor={setColorChoice}
               control={control}
@@ -475,7 +484,7 @@ export function BotPage() {
             </>
           )}
 
-          <p className="credits">Máy cờ: Stockfish 18 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
+          <p className="credits">Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
         </aside>
       </main>
       <PageFoot />

@@ -1,15 +1,16 @@
-// Bảng chọn trước ván chơi với máy: mức của máy, màu quân, thời gian. Ít chữ: mỗi mức chỉ là số và tên ngắn.
+// Bảng chọn trước ván chơi với máy: cấp độ của máy (số Elo + tên cấp độ, thanh trượt như chess.com), màu quân, thời gian.
+import type { CSSProperties } from 'react'
 import type { Color } from 'chess.js'
 import { Piece } from '../components/Piece'
 import { TimeControlPicker } from '../components/TimeControlPicker'
 import { controlLabel, type TimeControl } from '../game/clock'
-import { BOT_LEVELS } from './levels'
+import { clampElo, eloLabel, ELO_MAX, ELO_MIN, ELO_STEP, isImpossible, tierName } from './levels'
 
 export type ColorChoice = Color | 'random'
 
 type Props = {
-  level: number
-  onLevel: (id: number) => void
+  elo: number
+  onElo: (elo: number) => void
   color: ColorChoice
   onColor: (color: ColorChoice) => void
   control: TimeControl | null
@@ -38,27 +39,58 @@ function ColorBadge({ color }: { color: ColorChoice }) {
   )
 }
 
-export function BotSetup({ level, onLevel, color, onColor, control, onControl, onStart }: Props) {
+// Số Elo to ở giữa kèm tên cấp độ, dưới là thanh kéo, hai bên có nút − + để chỉnh từng nấc (trên điện thoại kéo khó dừng đúng số).
+function EloSlider({ value, onChange }: { value: number; onChange: (elo: number) => void }) {
+  const percent = ((value - ELO_MIN) / (ELO_MAX - ELO_MIN)) * 100
+  const nudge = (by: number) => onChange(clampElo(value + by))
+  const label = eloLabel(value)
+  const tier = tierName(value)
+  return (
+    <div className={`elo${isImpossible(value) ? ' elo--max' : ''}`}>
+      <output className="elo__readout" htmlFor="bot-elo" aria-live="polite">
+        <span className="elo__value">
+          {label}
+          <span className="elo__unit">Elo</span>
+        </span>
+        <span className="elo__tier">{tier}</span>
+      </output>
+      <div className="elo__row">
+        <button type="button" className="elo__step" aria-label="Yếu hơn" disabled={value <= ELO_MIN} onClick={() => nudge(-ELO_STEP)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+        <input
+          id="bot-elo"
+          className="elo__range"
+          type="range"
+          min={ELO_MIN}
+          max={ELO_MAX}
+          step={ELO_STEP}
+          value={value}
+          aria-labelledby="bot-level-title"
+          aria-valuetext={`${tier}, ${label} Elo`}
+          style={{ '--fill': `${percent}%` } as CSSProperties}
+          onChange={(event) => onChange(clampElo(Number(event.target.value)))}
+        />
+        <button type="button" className="elo__step" aria-label="Mạnh hơn" disabled={value >= ELO_MAX} onClick={() => nudge(ELO_STEP)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M12 5v14" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function BotSetup({ elo, onElo, color, onColor, control, onControl, onStart }: Props) {
   return (
     <div className="bot-setup">
       <div className="card" role="group" aria-labelledby="bot-level-title">
         <p className="card__heading" id="bot-level-title">
-          Mức của máy
+          Cấp độ của máy
         </p>
-        <div className="bot-levels">
-          {BOT_LEVELS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`bot-level${item.id === level ? ' bot-level--on' : ''}`}
-              aria-pressed={item.id === level}
-              onClick={() => onLevel(item.id)}
-            >
-              <span className="bot-level__num">{item.id}</span>
-              <span className="bot-level__name">{item.name}</span>
-            </button>
-          ))}
-        </div>
+        <EloSlider value={elo} onChange={onElo} />
       </div>
 
       <div className="card" role="group" aria-labelledby="bot-color-title">

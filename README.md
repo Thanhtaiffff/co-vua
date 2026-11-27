@@ -24,7 +24,7 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 
 - Bấm nút hình **robot** ở đầu trang (máy tính rê chuột vào thì hiện chữ "Chơi với máy"), hay mở thẳng `/may`.
 - Chọn **mức của máy** (1 Mới tập, 2 Dễ, 3 Vừa, 4 Khá, 5 Khó, 6 Cao thủ), **màu quân** (Trắng, Ngẫu nhiên, Đen), bấm **Chơi**. Thời gian gập sẵn ở dòng **Thời gian** (mặc định không tính giờ, như chess.com); mở ra để chọn đồng hồ, đồng hồ của máy cũng chạy.
-- Máy là **Stockfish 18** (bản lite, một luồng) chạy ngay trong trình duyệt bằng WebAssembly, không cần mạng sau khi tải xong (khoảng 7 MB, trình duyệt nhớ cho lần sau; máy bắt đầu tải ngay khi mở trang nên chọn xong là chơi được). Không gửi gì lên máy chủ.
+- Máy là **Stockfish 19** (bản lite, một luồng) chạy ngay trong trình duyệt bằng WebAssembly, không cần mạng sau khi tải xong (khoảng 2 MB, trình duyệt nhớ cho lần sau; máy bắt đầu tải ngay khi mở trang nên chọn xong là chơi được). Không gửi gì lên máy chủ.
 - Mức được "bó tay" bằng ba nút vặn trong `src/bot/levels.ts`: trình độ (Skill Level 0–20) của Stockfish, số nước máy được nhìn trước (độ sâu) và thời gian nghĩ, và ở mức 1–2 thì có tỉ lệ máy đi bừa một nước hợp lệ (35% và 10%). Máy nghĩ ít nhất khoảng nửa giây đến một giây cho tự nhiên.
 - **Đi lại**: lùi nước mình và nước máy vừa đáp (máy đang nghĩ thì chỉ lùi nước mình). **Đầu hàng** (bấm hai lần). **Ván mới** (đang chơi dở thì bấm hai lần) về bảng chọn. Hết ván có **Chơi lại** (cùng mức, cùng màu) và **Đổi mức**.
 - Ván đang chơi lưu trong máy: tải lại trang vẫn còn.
@@ -171,7 +171,7 @@ Code dự án phát hành theo **GPL-3.0-or-later** (xem file `LICENSE`), vì b�
 
 - [chess.js](https://github.com/jhlywa/chess.js): luật cờ, giấy phép BSD-2-Clause.
 - [chessground](https://github.com/lichess-org/chessground): bàn cờ của lichess, giấy phép GPL-3.0-or-later.
-- [Stockfish](https://stockfishchess.org) 18 qua [stockfish.js](https://github.com/nmrugg/stockfish.js) (Nathan Rugg, Chess.com): máy cờ cho chơi với máy, giấy phép GPL-3.0. File máy nằm ở `src/engine/vendor` (gói npm `stockfish` 18.0.8, bản lite một luồng) kèm `COPYING.txt`.
+- [Stockfish](https://stockfishchess.org) 19 qua [stockfish.js](https://github.com/nmrugg/stockfish.js) (Nathan Rugg, Chess.com): máy cờ cho chơi với máy, giấy phép GPL-3.0. File máy nằm ở `src/engine/vendor` (gói npm `stockfish` 19.0.1, bản lite một luồng) kèm `COPYING.txt`.
 - Bộ quân cburnett: Colin M.L. Burnett, giấy phép GPLv2+. Quân 2D theo chất liệu dựng từ hình bộ này nên cũng theo giấy phép đó.
 - Quân 3D và bàn cờ của các chủ đề do code của dự án tự dựng (`tools/themes`, dùng [three.js](https://threejs.org), giấy phép MIT, chỉ chạy lúc dựng ảnh, không nằm trong web).
 - Tiếng thu thật: [Kenney](https://kenney.nl), bộ Impact Sounds, Casino Audio và Interface Sounds, giấy phép CC0 (tặng cho mọi người, ai dùng cũng được). Dùng cho bộ Gỗ, các bộ Kim loại, Thủy tinh, và tiếng nền xi măng trong bộ Bàn đá. Tiếng đá gõ đá, các bộ Trống, Bass, 8-bit và Bong bóng do code của dự án tự dựng.
