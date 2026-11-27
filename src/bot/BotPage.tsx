@@ -484,7 +484,7 @@ export function BotPage() {
             </>
           )}
 
-          <p className="credits">Máy cờ: Stockfish 18 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
+          <p className="credits">Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
         </aside>
       </main>
       <PageFoot />

@@ -1,8 +1,8 @@
-// "Bộ não" máy cờ: Stockfish 18 (bản lite, một luồng) chạy ngay trong trình duyệt của người chơi, trong một Web Worker
+// "Bộ não" máy cờ: Stockfish 19 (bản lite, một luồng) chạy ngay trong trình duyệt của người chơi, trong một Web Worker
 // (một "tab ngầm" riêng, nên lúc máy nghĩ trang web không bị đơ). Không gửi gì lên máy chủ.
 //
 // Dùng chung cho chơi với máy (src/bot) và phân tích ván. Mỗi `new Engine()` là một máy riêng (một Worker riêng), nên
-// bot và phân tích không giành nhau. Máy chỉ tải (khoảng 7 MB, trình duyệt nhớ cho lần sau) khi được hỏi lần đầu.
+// bot và phân tích không giành nhau. Máy chỉ tải (khoảng 2 MB, trình duyệt nhớ cho lần sau) khi được hỏi lần đầu.
 //
 //   const engine = new Engine()
 //   const a = await engine.analyse(fen, { depth: 12, multipv: 3 })
@@ -10,12 +10,12 @@
 //   a.lines[0].score // { cp: 35 } hay { mate: 3 }, LUÔN theo góc nhìn Trắng
 //   engine.dispose() // tắt máy khi rời trang
 //
-// File máy nằm ở src/engine/vendor (gói npm `stockfish` 18.0.8 của Nathan Rugg và Chess.com, giấy phép GPL-3.0 như web).
+// File máy nằm ở src/engine/vendor (gói npm `stockfish` 19.0.1 của Nathan Rugg và Chess.com, giấy phép GPL-3.0 như web).
 // Bản thường: Vite chép hai file vào /assets với tên có mã băm, nên đường tới file .wasm được gửi kèm sau dấu # cho máy.
 // Bản một file (build:single, build:demo, build:bot): hai file bị nhúng thẳng vào trang dạng data: (file .wasm nén gzip,
 // xem vite.config.ts), đổi thành blob: rồi mới chạy.
-import engineJsUrl from './vendor/stockfish-18-lite-single.js?url'
-import engineWasmUrl from './vendor/stockfish-18-lite-single.wasm?url'
+import engineJsUrl from './vendor/stockfish-19-lite-single.js?url'
+import engineWasmUrl from './vendor/stockfish-19-lite-single.wasm?url'
 import { fenTurn, mergeLine, parseBestmove, parseInfo, type Analysis } from './uci'
 
 export type { Analysis, Line, Score } from './uci'
@@ -32,7 +32,7 @@ export type AnalyseOptions = {
   onUpdate?: (analysis: Analysis) => void // gọi mỗi khi máy tính sâu thêm (để hiện dần)
 }
 
-// Khoảng Elo mà Stockfish 18 tự bó sức được (kiểm bằng lệnh `uci`).
+// Khoảng Elo mà Stockfish 19 tự bó sức được (kiểm bằng lệnh `uci`).
 export const ENGINE_ELO_MIN = 1320
 export const ENGINE_ELO_MAX = 3190
 
