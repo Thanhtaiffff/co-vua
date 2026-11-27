@@ -8,7 +8,7 @@
 //   Elo càng thấp thì càng hay sai. Hai tỉ lệ này là ước lượng, chưa đo bằng cách cho máy đấu nhau.
 // Đổi độ khó thì sửa các con số trong `eloPlan`.
 import { Chess, type Move } from 'chess.js'
-import { ENGINE_ELO_MAX, ENGINE_ELO_MIN, type Analysis, type Engine } from '../engine/stockfish'
+import { ENGINE_ELO_MAX, ENGINE_ELO_MIN, type Analysis, type Engine, type EngineClock } from '../engine/stockfish'
 
 export const ELO_MIN = 200
 export const ELO_STEP = 100
@@ -83,6 +83,15 @@ export function eloPlan(rawElo: number): EloPlan {
   }
 }
 
+// Giờ hai bên theo cách Stockfish hiểu (wtime, btime...), biết máy đang cầm quân nào.
+function toEngineClock(clock: BotClock, side: 'w' | 'b'): EngineClock {
+  const mine = Math.max(0, clock.left - CLOCK_RESERVE)
+  const theirs = Math.max(0, clock.opponent)
+  return side === 'w'
+    ? { wtime: mine, btime: theirs, winc: clock.increment, binc: clock.increment }
+    : { wtime: theirs, btime: mine, winc: clock.increment, binc: clock.increment }
+}
+
 function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
@@ -113,9 +122,32 @@ function pickMove(analysis: Analysis, plan: EloPlan, legal: string[], random: ()
   return best ?? legal[0]
 }
 
+// Giờ của máy trong ván có đồng hồ (mili giây): giờ máy còn lúc tới lượt, giờ cộng thêm mỗi nước, giờ bên kia còn.
+export type BotClock = { left: number; increment: number; opponent: number }
+
+// Chừa lại cho trễ (trang vẽ lại, máy nhận lệnh) để không bao giờ hết giờ vì mấy phần trăm giây lẻ.
+const CLOCK_RESERVE = 300
+// Chia giờ còn lại như còn chừng này nước nữa: giờ càng ít, mỗi nước nghĩ càng nhanh, nên không bao giờ hết hẳn.
+const MOVES_AHEAD = 30
+
+// Thời gian tối đa máy được nghĩ một nước khi có đồng hồ: phần chia đều của giờ còn lại cộng phần lớn giờ được cộng.
+export function thinkBudget(clock: BotClock): number {
+  return Math.max(50, Math.round(Math.max(0, clock.left - CLOCK_RESERVE) / MOVES_AHEAD + clock.increment * 0.8))
+}
+
+// Máy đi nhanh quá thì trông như máy giật; mức thấp nghĩ rất nhanh nên chờ thêm cho tự nhiên (0,45 tới 1,05 giây).
+// Ván có đồng hồ thì khoảng chờ này không quá một phần ba thời gian được nghĩ, kẻo máy mất giờ vì "làm dáng".
+const MIN_THINK = 450
+const EXTRA_THINK = 600
+export function naturalWait(random: () => number, clock?: BotClock): number {
+  const wait = MIN_THINK + random() * EXTRA_THINK
+  return clock ? Math.min(wait, thinkBudget(clock) / 3) : wait
+}
+
 // Máy chọn một nước cho thế cờ sau các nước `moves` (dạng UCI, tính từ đầu ván). `random` để kiểm thử.
-// Trả null khi hết nước hoặc bị huỷ.
-export async function botMove(engine: Engine, moves: string[], elo: number, signal?: AbortSignal, random = Math.random): Promise<string | null> {
+// Ván có đồng hồ (`clock`): máy nghĩ không quá thời gian được chia, và Stockfish biết giờ hai bên để tự dừng sớm hơn
+// khi thế cờ dễ. Trả null khi hết nước hoặc bị huỷ.
+export async function botMove(engine: Engine, moves: string[], elo: number, signal?: AbortSignal, random = Math.random, clock?: BotClock): Promise<string | null> {
   const plan = eloPlan(elo)
   const chess = new Chess()
   for (const uci of moves) chess.move(fromUci(uci))
@@ -127,8 +159,9 @@ export async function botMove(engine: Engine, moves: string[], elo: number, sign
     skill: plan.skill,
     elo: plan.elo,
     depth: plan.depth,
-    movetime: plan.movetime,
+    movetime: clock ? Math.min(plan.movetime, thinkBudget(clock)) : plan.movetime,
     multipv: plan.multipv,
+    clock: clock && toEngineClock(clock, moves.length % 2 === 0 ? 'w' : 'b'),
     signal,
   })
   if (signal?.aborted) return null

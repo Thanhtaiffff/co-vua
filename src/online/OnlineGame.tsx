@@ -132,7 +132,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const chess = useMemo(() => replay(played), [played])
   const sans = useMemo(() => chess.history(), [chess])
   const turn = chess.turn()
-  const status: OnlineStatus = game.status.kind === 'playing' ? gameStatus(chess) : game.status
+  const status: OnlineStatus = useMemo(() => (game.status.kind === 'playing' ? gameStatus(chess) : game.status), [game.status, chess])
   const over = status.kind !== 'playing'
   const picking = promotion !== null && !over
   // Nước đi trước chỉ còn giá trị khi ván vẫn đi tiếp từ thế cờ lúc đặt: hết ván, sang ván mới, hay ván bị lùi lại
@@ -152,8 +152,9 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const stepSound = useCallback((to: number, from: number) => playReviewStep(played, from, to), [played])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(played.slice(0, review.shown)) : chess), [review.reviewing, review.shown, played, chess])
-  const captured = capturedPieces(shownChess)
-  const material = materialDiff(shownChess)
+  // Chỉ tính lại khi thế cờ đổi, không phải mỗi lần đồng hồ nhảy số (10 lần mỗi giây).
+  const captured = useMemo(() => capturedPieces(shownChess), [shownChess])
+  const material = useMemo(() => materialDiff(shownChess), [shownChess])
   // Máy phân tích ván: chỉ mở khi ván đã xong (đang chơi mà mở thì thành gian lận).
   const analysis = useGameReview(over ? played : null)
   const reviewed = analysis.state.status === 'done' ? analysis.state.review : null
