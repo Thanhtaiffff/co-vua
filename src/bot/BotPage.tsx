@@ -18,7 +18,7 @@ import { TopBar } from '../components/TopBar'
 import { Engine } from '../engine/stockfish'
 import { describeGame, useFeedbackGame } from '../feedback/context'
 import { PageFoot } from '../feedback/FeedbackForm'
-import { describeControl, flagTime, lastTimes, lowTime, newClock, recordMove, restoreClock, sameControl, TIME_CONTROLS, undoMove, type ClockState, type TimeControl } from '../game/clock'
+import { describeControl, flagTime, lastTimes, lowTime, newClock, recordMove, restoreClock, rewindClock, sameControl, TIME_CONTROLS, type ClockState, type TimeControl } from '../game/clock'
 import {
   capturedPieces,
   describeMove,
@@ -94,7 +94,8 @@ export function BotPage() {
   })
   const [control, setControl] = useState<TimeControl | null>(savedControl)
   const [flipped, setFlipped] = useState(false)
-  const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null)
+  // `ply`: nước phong cấp đi từ thế cờ sau nước thứ mấy (có thể là thế cờ đang xem lại).
+  const [promotion, setPromotion] = useState<{ from: Square; to: Square; ply: number } | null>(null)
   const [confirm, setConfirm] = useState<'new' | 'resign' | null>(null)
   const [thinking, setThinking] = useState(false)
   const [engineError, setEngineError] = useState(false)
@@ -125,7 +126,7 @@ export function BotPage() {
   const result: GameResult = resigned ? { kind: 'resign', winner: bot } : status
   const over = game !== null && result.kind !== 'playing'
   const playing = game !== null && !over
-  const picking = promotion !== null && playing
+  const picking = promotion !== null && game !== null
   const botTurn = playing && turn === bot
   const bottom: Color = flipped ? bot : you
   const top = other(bottom)
@@ -191,16 +192,25 @@ export function BotPage() {
     return () => clearTimeout(timer)
   }, [confirm])
 
-  // Đi một nước (người hay máy): ghi nước đi và giờ. Lỡ hết giờ rồi thì không nhận.
+  // Đi một nước (người hay máy) từ thế cờ sau nước thứ `ply` (mặc định: thế cờ hiện tại): ghi nước đi và giờ.
+  // `ply` nhỏ hơn số nước (người chơi đang xem lại thế cờ cũ) thì thay cho nút Đi lại: bỏ các nước sau, đồng hồ quay về
+  // như lúc đó, ván đã đầu hàng thì chơi tiếp. Đi tiếp ở thế cờ hiện tại mà lỡ hết giờ rồi thì không nhận.
+  const { reset: stopReview } = review
   const play = useCallback(
-    (move: PlayedMove) => {
+    (move: PlayedMove, ply = moves.length) => {
       const time = Date.now()
-      if (flagAt !== null && time >= flagAt) return
-      playMove(describeMove(chess, move))
-      setMoves((prev) => [...prev, move])
-      setClock((prev) => recordMove(prev, chess.turn(), time))
+      const rewind = ply < moves.length
+      if (!rewind && flagAt !== null && time >= flagAt) return
+      const from = rewind ? replay(moves.slice(0, ply)) : chess
+      playMove(describeMove(from, move))
+      setMoves((prev) => [...prev.slice(0, ply), move])
+      setClock((prev) => recordMove(rewind ? rewindClock(prev, ply, time) : prev, from.turn(), time))
+      if (rewind) {
+        setResigned(false)
+        stopReview()
+      }
     },
-    [chess, flagAt],
+    [chess, moves, flagAt, stopReview],
   )
   const playRef = useRef(play)
   useEffect(() => {
@@ -237,7 +247,9 @@ export function BotPage() {
 
   const config = useMemo<Config>(() => {
     if (picking) return { orientation: boardSide, movable: { color: undefined, dests: new Map() } }
-    const locked = !playing || botTurn || review.reviewing
+    // Đi được khi thế cờ trên bàn tới lượt mình: thế cờ hiện tại lúc ván đang chơi, hay một thế cờ cũ đang xem lại
+    // (kể cả khi ván đã xong). Thế cờ tới lượt máy thì chỉ xem.
+    const locked = game === null || (!playing && !review.reviewing) || shownChess.turn() !== you
     const last = shownChess.history({ verbose: true }).at(-1)
     return {
       fen: shownChess.fen(),
@@ -250,7 +262,7 @@ export function BotPage() {
         dests: locked ? new Map() : legalDests(shownChess),
       },
     }
-  }, [shownChess, boardSide, playing, botTurn, picking, review.reviewing, you])
+  }, [shownChess, boardSide, game, playing, picking, review.reviewing, you])
 
   function clockFace(color: Color): ClockFace | null {
     const last = lastTimes(clock)
@@ -273,16 +285,17 @@ export function BotPage() {
 
   function handleMove(from: Key, to: Key) {
     const move = { from: from as Square, to: to as Square }
-    if (isPromotion(chess, move.from, move.to)) {
-      setPromotion(move)
+    if (isPromotion(shownChess, move.from, move.to)) {
+      setPromotion({ ...move, ply: review.shown })
       return
     }
-    play(move)
+    play(move, review.shown)
   }
 
   function pickPromotion(type: PieceSymbol) {
     if (!promotion) return
-    play({ ...promotion, promotion: type })
+    const { ply, ...move } = promotion
+    play({ ...move, promotion: type }, ply)
     setPromotion(null)
   }
 
@@ -298,19 +311,6 @@ export function BotPage() {
     setConfirm(null)
     engineRef.current?.newGame().catch(() => undefined)
     playSound('start')
-  }
-
-  // Đi lại: lùi về lượt mình gần nhất. Máy đang nghĩ thì lùi nước mình vừa đi; máy đã đáp thì lùi cả nước máy.
-  const undoCount = botTurn ? (moves.length > 0 ? 1 : 0) : moves.length >= 2 ? 2 : 0
-  function undo() {
-    if (undoCount === 0) return
-    setPromotion(null)
-    setMoves((prev) => prev.slice(0, -undoCount))
-    setClock((prev) => {
-      let next = prev
-      for (let i = 0; i < undoCount; i++) next = undoMove(next, Date.now())
-      return next
-    })
   }
 
   function resign() {
@@ -345,9 +345,17 @@ export function BotPage() {
   const feedbackGame = useMemo(() => ({ sans, side: boardSide, state: `chơi với máy ${tierName(botElo)} ${eloLabel(botElo)} Elo, ${feedbackState}` }), [sans, boardSide, botElo, feedbackState])
   useFeedbackGame(feedbackGame)
 
+  // Đang xem thế cờ cũ thì dòng báo nói theo thế cờ đó (tới lượt mình thì đi tiếp được ngay từ đó).
+  const shownYours = shownChess.turn() === you
   const statusLine = engineError
     ? 'Không tải được máy.'
-    : botTurn
+    : review.reviewing
+      ? shownYours
+        ? shownChess.inCheck()
+          ? 'Bạn đang bị chiếu!'
+          : 'Tới lượt bạn'
+        : 'Lượt máy'
+      : botTurn
       ? thinking
         ? 'Máy đang nghĩ…'
         : 'Đang tải máy…'
@@ -374,7 +382,7 @@ export function BotPage() {
           />
           <div className={`board-frame${review.reviewing ? ' board-frame--review' : ''}`}>
             <Board config={config} onMove={handleMove} />
-            {picking && <PromotionPicker color={turn} onPick={pickPromotion} onCancel={() => setPromotion(null)} />}
+            {picking && <PromotionPicker color={you} onPick={pickPromotion} onCancel={() => setPromotion(null)} />}
             <EndFx
               event={endFx}
               end={over ? { winner } : undefined}
@@ -430,7 +438,7 @@ export function BotPage() {
                   onGo={goTo}
                 />
               ) : (
-                <div className={`status${status.kind === 'playing' && status.check && !botTurn ? ' status--check' : ''}`} role="status">
+                <div className={`status${review.reviewing ? (shownYours && shownChess.inCheck() ? ' status--check' : '') : status.kind === 'playing' && status.check && !botTurn ? ' status--check' : ''}`} role="status">
                   <span className="status__text">{statusLine}</span>
                   {engineError && (
                     <span className="status__hint status__hint--warn">
@@ -442,7 +450,7 @@ export function BotPage() {
                   )}
                   {review.reviewing && (
                     <span className="status__hint">
-                      Đang xem lại thế cờ cũ.{' '}
+                      {shownYours ? 'Đi ở đây sẽ bỏ các nước sau.' : 'Lùi thêm một nước để đi lại từ đó.'}{' '}
                       <button type="button" className="link-button" onClick={() => review.go(moves.length)}>
                         Về ván đang chơi
                       </button>
@@ -458,9 +466,6 @@ export function BotPage() {
               <div className="controls">
                 {playing ? (
                   <>
-                    <button type="button" className="btn" onClick={undo} disabled={undoCount === 0}>
-                      Đi lại
-                    </button>
                     <button type="button" className={`btn${confirm === 'resign' ? ' btn--confirm' : ''}`} onClick={resign} disabled={moves.length === 0}>
                       {confirm === 'resign' ? 'Bấm lần nữa' : 'Đầu hàng'}
                     </button>
