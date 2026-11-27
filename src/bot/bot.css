@@ -7,60 +7,143 @@
   gap: 12px;
 }
 
-.bot-levels {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.bot-level {
+/* Sức của máy: số Elo to, dưới là thanh kéo và hai nút − +. */
+.elo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
-  font: inherit;
+  gap: 6px;
+}
+
+.elo__value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   color: var(--ink);
-  background: var(--surface);
+}
+
+.elo__unit {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.elo__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.elo__step {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 50%;
   cursor: pointer;
+  touch-action: manipulation;
   transition:
     border-color 120ms ease,
     background-color 120ms ease;
 }
 
-.bot-level:hover {
+.elo__step svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.elo__step:hover:not(:disabled) {
   border-color: var(--accent);
 }
 
-.bot-level:focus-visible {
+.elo__step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.elo__step:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.bot-level--on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
+/* Thanh kéo tự vẽ: phần đã kéo tô màu nhấn (--fill do React đặt), núm tròn to để dễ chạm. */
+.elo__range {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: pan-y;
 }
 
-.bot-level__num {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 800;
-  line-height: 1.1;
+.elo__range:focus-visible {
+  outline: none;
 }
 
-.bot-level__name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
+.elo__range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--surface-3) var(--fill));
 }
 
-.bot-level--on .bot-level__name {
-  color: var(--ink);
+.elo__range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.elo__range::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.elo__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -9px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+
+.elo__range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+
+.elo__range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.elo__range:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Chọn thời gian: gập lại, chỉ hiện dòng "Thời gian · Không tính giờ"; bấm vào thì mở bảng chọn. */

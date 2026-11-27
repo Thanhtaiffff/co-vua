@@ -26,10 +26,15 @@ export type AnalyseOptions = {
   nodes?: number // xét tối đa bấy nhiêu thế cờ
   multipv?: number // cần mấy đường tốt nhất (mặc định 1)
   skill?: number // trình độ 0..20 của Stockfish (mặc định 20, mạnh nhất)
+  elo?: number // bó sức máy theo Elo (Stockfish chỉ nhận 1320..3190); có thì `skill` bị bỏ qua
   moves?: string[] // các nước đi tiếp từ `fen` (dạng UCI); đưa cả ván thì máy biết luật lặp 3 lần
   signal?: AbortSignal // huỷ: máy dừng ngay và trả về kết quả đang có
   onUpdate?: (analysis: Analysis) => void // gọi mỗi khi máy tính sâu thêm (để hiện dần)
 }
+
+// Khoảng Elo mà Stockfish 18 tự bó sức được (kiểm bằng lệnh `uci`).
+export const ENGINE_ELO_MIN = 1320
+export const ENGINE_ELO_MAX = 3190
 
 const EMPTY: Analysis = { bestmove: null, depth: 0, lines: [] }
 
@@ -168,6 +173,9 @@ export class Engine {
     const turn = moves.length % 2 === 0 ? fenTurn(fen) : fenTurn(fen) === 'w' ? 'b' : 'w'
     this.send(`setoption name MultiPV value ${Math.max(1, Math.min(10, Math.round(options.multipv ?? 1)))}`)
     this.send(`setoption name Skill Level value ${Math.max(0, Math.min(20, Math.round(options.skill ?? 20)))}`)
+    // Luôn gửi cả hai, để lần hỏi trước có bó Elo cũng không dính sang lần sau.
+    this.send(`setoption name UCI_LimitStrength value ${options.elo ? 'true' : 'false'}`)
+    if (options.elo) this.send(`setoption name UCI_Elo value ${Math.max(ENGINE_ELO_MIN, Math.min(ENGINE_ELO_MAX, Math.round(options.elo)))}`)
     this.send(`position fen ${fen}${moves.length ? ` moves ${moves.join(' ')}` : ''}`)
     await this.sync()
 
