@@ -68,7 +68,7 @@ export default function App() {
   const chess = useMemo(() => replay(moves), [moves])
   const sans = useMemo(() => chess.history(), [chess])
   const turn = chess.turn()
-  const boardStatus = gameStatus(chess)
+  const boardStatus = useMemo(() => gameStatus(chess), [chess])
   // Lúc bên đang tới lượt hết giờ; null khi đồng hồ không chạy.
   const flagAt = boardStatus.kind === 'playing' ? flagTime(clock, turn) : null
   const now = useNow(flagAt)
@@ -85,11 +85,12 @@ export default function App() {
   const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
-  const captured = capturedPieces(shownChess)
+  // Chỉ tính lại khi thế cờ đổi, không phải mỗi lần đồng hồ nhảy số (10 lần mỗi giây).
+  const captured = useMemo(() => capturedPieces(shownChess), [shownChess])
   // Dòng báo lượt: đang xem thế cờ cũ thì báo theo thế cờ đó, vì đi được ngay từ đó.
   const shownStatus = review.reviewing ? gameStatus(shownChess) : status
   const shownCheck = shownStatus.kind === 'playing' && shownStatus.check
-  const material = materialDiff(shownChess)
+  const material = useMemo(() => materialDiff(shownChess), [shownChess])
   // Máy phân tích ván: chỉ mở khi ván đã xong.
   const analysis = useGameReview(over ? moves : null)
   const reviewed = analysis.state.status === 'done' ? analysis.state.review : null

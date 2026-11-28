@@ -132,7 +132,7 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const chess = useMemo(() => replay(played), [played])
   const sans = useMemo(() => chess.history(), [chess])
   const turn = chess.turn()
-  const status: OnlineStatus = game.status.kind === 'playing' ? gameStatus(chess) : game.status
+  const status: OnlineStatus = useMemo(() => (game.status.kind === 'playing' ? gameStatus(chess) : game.status), [game.status, chess])
   const over = status.kind !== 'playing'
   const picking = promotion !== null && !over
   // Nước đi trước chỉ còn giá trị khi ván vẫn đi tiếp từ thế cờ lúc đặt: hết ván, sang ván mới, hay ván bị lùi lại
@@ -152,8 +152,9 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
   const stepSound = useCallback((to: number, from: number) => playReviewStep(played, from, to), [played])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(played.slice(0, review.shown)) : chess), [review.reviewing, review.shown, played, chess])
-  const captured = capturedPieces(shownChess)
-  const material = materialDiff(shownChess)
+  // Chỉ tính lại khi thế cờ đổi, không phải mỗi lần đồng hồ nhảy số (10 lần mỗi giây).
+  const captured = useMemo(() => capturedPieces(shownChess), [shownChess])
+  const material = useMemo(() => materialDiff(shownChess), [shownChess])
   // Máy phân tích ván: chỉ mở khi ván đã xong (đang chơi mà mở thì thành gian lận).
   const analysis = useGameReview(over ? played : null)
   const reviewed = analysis.state.status === 'done' ? analysis.state.review : null
@@ -384,6 +385,10 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
 
   const early = moves.length < 2
   const offline = connection !== 'open'
+  // Ván không tính giờ mà đối thủ rời phòng: đếm ngược tới lúc được nhận thắng (máy chủ báo còn bao lâu).
+  const claimAt = me && !over && game.claimIn !== null ? receivedAt + game.claimIn : null
+  const claimNow = useNow(claimAt)
+  const claimLeft = claimAt === null ? 0 : Math.max(0, Math.ceil((claimAt - claimNow) / 1000))
   const showMatch = game.number > 1 || game.score.w + game.score.b > 0
   // Đi lại: lùi nước vừa đi của mình; đang tới lượt mình thì lùi cả nước đối thủ vừa đi.
   const myTakeback = me ? takebackPlies(moves.length, me) : 0
@@ -531,6 +536,20 @@ export function OnlineGame({ game, role, chat, receivedAt, connection, send, lag
               </button>
               <button type="button" className="btn" onClick={() => send({ t: 'draw', yes: false })}>
                 Từ chối
+              </button>
+            </div>
+          </div>
+        )}
+
+        {opponent && claimAt !== null && (
+          <div className="offer" role="status">
+            <p className="offer__text">
+              {name(opponent)} đã rời ván.{' '}
+              {claimLeft > 0 ? `Quá ${claimLeft} giây nữa chưa quay lại thì ${early ? 'bạn huỷ ván được' : 'bạn nhận thắng được'}.` : ''}
+            </p>
+            <div className="offer__actions">
+              <button type="button" className="btn btn--primary" disabled={claimLeft > 0 || offline} onClick={() => send({ t: 'claim' })}>
+                {early ? 'Huỷ ván' : 'Nhận thắng'}
               </button>
             </div>
           </div>

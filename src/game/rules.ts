@@ -9,9 +9,14 @@ export type GameStatus =
   | { kind: 'timeoutDraw'; flagged: Color }
   | { kind: 'stalemate' | 'insufficient' | 'threefold' | 'fifty' }
 
-// Kết quả một ván: ngoài các kiểu tự xử trên bàn cờ, chơi online còn có đầu hàng, hai bên đồng ý hòa,
-// và huỷ ván (một bên thôi khi chưa ai đi quá một nước, không tính thắng thua).
-export type GameResult = GameStatus | { kind: 'resign'; winner: Color } | { kind: 'agreed' } | { kind: 'aborted' }
+// Kết quả một ván: ngoài các kiểu tự xử trên bàn cờ, chơi online còn có đầu hàng, bỏ ván (rời phòng quá lâu trong ván
+// không tính giờ, đối thủ nhận thắng), hai bên đồng ý hòa, và huỷ ván (một bên thôi khi chưa ai đi quá một nước,
+// không tính thắng thua).
+export type GameResult =
+  | GameStatus
+  | { kind: 'resign' | 'abandon'; winner: Color }
+  | { kind: 'agreed' }
+  | { kind: 'aborted' }
 
 export type MaterialSide = { pieces: PieceSymbol[]; score: number }
 

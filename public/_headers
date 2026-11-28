@@ -3,7 +3,7 @@
 #
 # Content-Security-Policy: chỉ chạy mã, chỉ tải phông chữ và hình của chính web ('self'), giống lichess. Ngoại lệ:
 #   - style-src 'unsafe-inline': chủ đề quân và bàn cờ tự viết thẻ <style> (src/theme.ts). Lichess cũng cho như vậy.
-#   - fonts.googleapis.com, fonts.gstatic.com: phông chữ Be Vietnam Pro và JetBrains Mono (index.html).
+#   - fonts.googleapis.com, fonts.gstatic.com: phông chữ Archivo, Be Vietnam Pro và IBM Plex Mono (index.html).
 #   - wss://*.thanhtaiffff.workers.dev: đường dây chơi online. Trình duyệt mới hiểu 'self' gồm cả đường dây này,
 #     Safari cũ (iOS 15 trở về trước) thì chưa, nên ghi rõ. Đổi sang tên miền riêng thì thêm wss://<tên miền> vào đây.
 #   Dùng thêm phông chữ, hình hay mã từ web khác thì PHẢI ghi thêm địa chỉ đó vào dòng này, không thì trình duyệt chặn.

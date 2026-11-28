@@ -38,9 +38,11 @@ import { loadSaved, save } from '../storage'
 import { useNow } from '../useNow'
 import { showBoard, useReview } from '../useReview'
 import { playReviewStep } from '../reviewSound'
+import { moveMarks, reviewShapes } from '../reviewView'
+import { useGameReview } from '../useGameReview'
 import './bot.css'
 import { BotSetup, type ColorChoice } from './BotSetup'
-import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, fromUci, isImpossible, tierName, toUci } from './levels'
+import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, fromUci, isImpossible, naturalWait, tierName, toUci, type BotClock } from './levels'
 
 const SIDE: Record<Color, 'white' | 'black'> = { w: 'white', b: 'black' }
 const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
@@ -48,9 +50,6 @@ const other = (color: Color): Color => (color === 'w' ? 'b' : 'w')
 // Ván đang chơi: người chơi cầm màu nào, máy bao nhiêu Elo (chốt lúc bấm Chơi).
 type Game = { side: Color; elo: number }
 
-// Máy đi nhanh quá thì trông như máy giật; mức thấp nghĩ rất nhanh nên chờ thêm cho tự nhiên.
-const MIN_THINK = 450
-const EXTRA_THINK = 600
 
 function savedGame(): Game | null {
   const saved = loadSaved<{ side?: unknown; elo?: unknown; level?: unknown } | null>('botGame', null)
@@ -118,7 +117,7 @@ export function BotPage() {
   const you: Color = game?.side ?? (colorChoice === 'b' ? 'b' : 'w')
   const bot = other(you)
   const botElo = game?.elo ?? elo
-  const boardStatus = gameStatus(chess)
+  const boardStatus = useMemo(() => gameStatus(chess), [chess])
   const flagAt = game && boardStatus.kind === 'playing' ? flagTime(clock, turn) : null
   const now = useNow(flagAt)
   const status = flagAt !== null && now >= flagAt ? timeoutStatus(chess, turn) : boardStatus
@@ -137,8 +136,14 @@ export function BotPage() {
   const stepSound = useCallback((to: number, from: number) => playReviewStep(moves, from, to), [moves])
   const review = useReview(moves.length, stepSound)
   const shownChess = useMemo(() => (review.reviewing ? replay(moves.slice(0, review.shown)) : chess), [review.reviewing, review.shown, moves, chess])
-  const captured = capturedPieces(shownChess)
-  const material = materialDiff(shownChess)
+  // Chỉ tính lại khi thế cờ đổi, không phải mỗi lần đồng hồ nhảy số (10 lần mỗi giây).
+  const captured = useMemo(() => capturedPieces(shownChess), [shownChess])
+  const material = useMemo(() => materialDiff(shownChess), [shownChess])
+
+  // Phân tích ván sau khi hết ván, như trang chơi một máy và chơi online (máy chấm riêng, không dùng máy đang đánh).
+  const analysis = useGameReview(over ? moves : null)
+  const reviewed = analysis.state.status === 'done' ? analysis.state.review : null
+  const marks = moveMarks(reviewed)
 
   useEffect(() => save('botGame', game), [game])
   useEffect(() => save('botMoves', moves), [moves])
@@ -207,6 +212,12 @@ export function BotPage() {
     playRef.current = play
   }, [play])
 
+  // Giờ mới nhất cho lượt nghĩ của máy (đổi cùng lúc với các nước đi, nên không cần hỏi lại máy khi giờ đổi).
+  const clockRef = useRef(clock)
+  useEffect(() => {
+    clockRef.current = clock
+  }, [clock])
+
   // Tới lượt máy: hỏi máy một nước rồi đi. Đi lại, ván mới, rời trang thì huỷ lượt nghĩ đang dở.
   const uciMoves = useMemo(() => moves.map(toUci), [moves])
   useEffect(() => {
@@ -214,9 +225,17 @@ export function BotPage() {
     if (!botTurn || !engine || engineError) return
     const abort = new AbortController()
     const start = Date.now()
-    const wait = MIN_THINK + Math.random() * EXTRA_THINK
+    // Ván có đồng hồ (và đồng hồ đã chạy): máy biết giờ của mình để chia, không thua vì hết giờ.
+    const latest = clockRef.current
+    const flag = flagTime(latest, bot)
+    const times = lastTimes(latest)
+    const botClock: BotClock | undefined =
+      flag !== null && times && latest.control
+        ? { left: flag - start, increment: latest.control.increment * 1000, opponent: times[other(bot)] }
+        : undefined
+    const wait = naturalWait(Math.random, botClock)
     setThinking(true)
-    botMove(engine, uciMoves, botElo, abort.signal)
+    botMove(engine, uciMoves, botElo, abort.signal, Math.random, botClock)
       .then(async (uci) => {
         const left = wait - (Date.now() - start)
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, left))
@@ -233,7 +252,7 @@ export function BotPage() {
       abort.abort()
       setThinking(false)
     }
-  }, [botTurn, uciMoves, botElo, engineError, retry])
+  }, [botTurn, bot, uciMoves, botElo, engineError, retry])
 
   const config = useMemo<Config>(() => {
     if (picking) return { orientation: boardSide, movable: { color: undefined, dests: new Map() } }
@@ -249,8 +268,9 @@ export function BotPage() {
         color: locked ? undefined : SIDE[you],
         dests: locked ? new Map() : legalDests(shownChess),
       },
+      drawable: { autoShapes: reviewShapes(reviewed, review.shown) },
     }
-  }, [shownChess, boardSide, playing, botTurn, picking, review.reviewing, you])
+  }, [shownChess, boardSide, playing, botTurn, picking, review.reviewing, review.shown, you, reviewed])
 
   function clockFace(color: Color): ClockFace | null {
     const last = lastTimes(clock)
@@ -336,6 +356,12 @@ export function BotPage() {
     setFlipped(false)
   }
 
+  // Bấm Phân tích ở bảng kết quả trên bàn cờ: bật máy chấm, cuộn tới thẻ kết quả (điện thoại nằm dưới bàn cờ).
+  function analyse() {
+    analysis.start()
+    requestAnimationFrame(() => document.querySelector('.result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  }
+
   function retryEngine() {
     setEngineError(false)
     setRetry((n) => n + 1)
@@ -385,6 +411,7 @@ export function BotPage() {
               reason={resultReason(result, name)}
               onNew={start}
               newLabel="Chơi lại"
+              onAnalyse={analysis.state.status === 'idle' ? analyse : undefined}
             />
           </div>
           <PlayerBar
@@ -399,7 +426,7 @@ export function BotPage() {
             clock={clockFace(bottom)}
           />
           <div className="board-under">
-            <MoveStrip sans={sans} times={clock.spent} shown={review.shown} onGo={review.go} />
+            <MoveStrip sans={sans} times={clock.spent} shown={review.shown} onGo={review.go} marks={marks} />
             <BoardTools onFlip={() => setFlipped((f) => !f)} />
           </div>
         </section>
@@ -428,6 +455,7 @@ export function BotPage() {
                   orientation={boardSide}
                   shown={review.shown}
                   onGo={goTo}
+                  analysis={analysis}
                 />
               ) : (
                 <div className={`status${status.kind === 'playing' && status.check && !botTurn ? ' status--check' : ''}`} role="status">
@@ -480,11 +508,14 @@ export function BotPage() {
                 )}
               </div>
 
-              <MoveList sans={sans} times={clock.spent} shown={review.shown} onGo={review.go} />
+              <MoveList sans={sans} times={clock.spent} shown={review.shown} onGo={review.go} marks={marks} />
             </>
           )}
 
-          <p className="credits">Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com.</p>
+          <p className="credits">
+            Máy cờ: Stockfish 19 (GPL), chạy ngay trong trình duyệt, bản stockfish.js của Nathan Rugg và Chess.com. Số Elo của máy là ước
+            lượng, có thể lệch so với Elo người chơi trên chess.com.
+          </p>
         </aside>
       </main>
       <PageFoot />

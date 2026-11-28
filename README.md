@@ -13,6 +13,7 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 - **Đi trước nhiều nước** (premove) như chess.com: lúc đối thủ đang nghĩ, kéo sẵn một chuỗi nước (tối đa 12). Bàn cờ hiện quân mình ở chỗ mới, các ô của nước đi trước tô màu, nên kéo tiếp được từ chỗ mới. Đối thủ đi xong là nước đầu chuỗi tự đi ngay; nước nào thành không hợp lệ (quân bị ăn, đường bị chắn) thì huỷ cả phần còn lại. Chạm ô trống, hay bấm **Huỷ hết**, để huỷ. Đi trước mà phong cấp thì tự lên Hậu.
 - **Xin đi lại** (bấm nhầm) như chess.com: đối thủ thấy lời xin, bấm **Cho đi lại** hay **Không cho**. Vừa đi xong mà xin thì lùi nước đó; đang tới lượt mình mà xin thì lùi cả nước đối thủ vừa đi. Đồng hồ và thời gian nghĩ quay về như trước các nước bị lùi. Mỗi lượt xin một lần; đối thủ đi tiếp thay vì trả lời là coi như không cho.
 - Xin hòa, đầu hàng (bấm hai lần). Chưa ai đi quá một nước thì nút thành **Huỷ ván**, không tính thắng thua.
+- **Nhận thắng khi đối thủ bỏ đi**: ván không tính giờ mà đối thủ đóng trang hay mất mạng quá 1 phút thì bên còn lại có nút **Nhận thắng** (chưa ai đi quá một nước thì là Huỷ ván). Ván có giờ thì đồng hồ của người bỏ đi tự hết.
 - **Đấu ván nữa**: hai bên cùng bấm thì vào ván mới, tự đổi màu cho nhau, tỉ số cộng dồn. Bên kia có nút **Từ chối**; bị từ chối thì không mời lại được nữa (khỏi làm phiền), trừ khi bên kia đổi ý mời lại.
 - **Chat** giữa hai người chơi: máy tính thì khung chat nằm bên trái bàn cờ, điện thoại thì có nút Chat ở góc dưới (chấm đỏ đếm tin chưa đọc), tin mới của đối thủ hiện thành bong bóng trên thanh tên họ vài giây. Có hàng câu nhanh đổi theo lúc ván (đầu ván, giữa ván, hết ván) và bảng emoji. Nút **Tắt chat** (trình duyệt nhớ cho các ván sau; đối thủ thấy là mình đã tắt). Người xem không đọc được chat. Máy chủ giữ 100 câu gần nhất suốt phòng (tải lại trang, đấu ván nữa vẫn còn); mỗi câu tối đa 200 ký tự, mỗi người gửi liền 5 câu rồi mỗi giây một câu; link trong tin chỉ là chữ, không bấm được.
 - Rớt mạng, khoá màn hình, tải lại trang: tự nối lại, vào đúng ghế cũ. Góc ảnh đại diện của đối thủ có chấm xanh khi bạn bè còn trong phòng; mất kết nối thì chấm thành xám và hiện chữ "mất kết nối" cạnh tên.
@@ -23,9 +24,10 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 ### Chơi với máy
 
 - Bấm nút hình **robot** ở đầu trang (máy tính rê chuột vào thì hiện chữ "Chơi với máy"), hay mở thẳng `/may`.
-- Chọn **mức của máy** (1 Mới tập, 2 Dễ, 3 Vừa, 4 Khá, 5 Khó, 6 Cao thủ), **màu quân** (Trắng, Ngẫu nhiên, Đen), bấm **Chơi**. Thời gian gập sẵn ở dòng **Thời gian** (mặc định không tính giờ, như chess.com); mở ra để chọn đồng hồ, đồng hồ của máy cũng chạy.
+- Chọn **cấp độ của máy** bằng thanh trượt Elo (200 tới 3100, mỗi nấc 100, nấc cuối là **Impossible**: máy đánh hết sức), **màu quân** (Trắng, Ngẫu nhiên, Đen), bấm **Chơi**. Thời gian gập sẵn ở dòng **Thời gian** (mặc định không tính giờ, như chess.com); mở ra để chọn đồng hồ, đồng hồ của máy cũng chạy.
 - Máy là **Stockfish 19** (bản lite, một luồng) chạy ngay trong trình duyệt bằng WebAssembly, không cần mạng sau khi tải xong (khoảng 2 MB, trình duyệt nhớ cho lần sau; máy bắt đầu tải ngay khi mở trang nên chọn xong là chơi được). Không gửi gì lên máy chủ.
-- Mức được "bó tay" bằng ba nút vặn trong `src/bot/levels.ts`: trình độ (Skill Level 0–20) của Stockfish, số nước máy được nhìn trước (độ sâu) và thời gian nghĩ, và ở mức 1–2 thì có tỉ lệ máy đi bừa một nước hợp lệ (35% và 10%). Máy nghĩ ít nhất khoảng nửa giây đến một giây cho tự nhiên.
+- Cấp độ nằm ở `src/bot/levels.ts`: từ 1320 Elo trở lên dùng núm Elo có sẵn của Stockfish; thấp hơn thì máy hay đi sai một cách có chủ ý (Elo càng thấp càng hay sai). Số Elo là ước lượng, có thể lệch so với Elo trên chess.com. Máy nghĩ khoảng nửa giây đến một giây cho tự nhiên.
+- **Máy biết nhìn đồng hồ**: chơi có giờ thì máy tự chia thời gian còn lại cho các nước sau (giữ lại một chút phòng mạng chậm), nên ván nhanh như 1+0 máy không bị hết giờ; sắp hết giờ thì máy đi nhanh, bỏ luôn phần nghĩ "cho tự nhiên".
 - **Đi lại**: lùi nước mình và nước máy vừa đáp (máy đang nghĩ thì chỉ lùi nước mình). **Đầu hàng** (bấm hai lần). **Ván mới** (đang chơi dở thì bấm hai lần) về bảng chọn. Hết ván có **Chơi lại** (cùng mức, cùng màu) và **Đổi mức**.
 - Ván đang chơi lưu trong máy: tải lại trang vẫn còn.
 - Phần "bộ não" (`src/engine/stockfish.ts`) dùng chung được cho việc khác (phân tích ván): mỗi `new Engine()` là một máy riêng chạy trong Web Worker, `analyse(fen, { depth, movetime, multipv, skill, moves, signal })` trả nước tốt nhất và điểm theo góc nhìn Trắng.
@@ -37,16 +39,16 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 - Cột nước đi hiện **thời gian nghĩ** từng nước. Online thì máy chủ đo, đã trừ thời gian đường truyền.
 - **Xem lại**: bấm một nước trong cột nước đi (điện thoại: dải nước đi ngay dưới bàn cờ) để xem thế cờ lúc đó; nút mũi tên, phím ← → (Home, End) để lùi, tiến. Bàn cờ có viền màu khi đang xem thế cờ cũ; có nước mới thì tự về ván đang chơi.
 - **Bàn cờ to vừa màn hình**. Sát mép phải bàn cờ là thanh nút như chess.com: **Lật bàn**, **Phóng to**, **Thu nhỏ** (mỗi lần một phần mười, nhỏ nhất còn một nửa, máy nhớ cỡ đã chọn), **Toàn màn hình** (ẩn thanh địa chỉ, thanh tab của trình duyệt). Điện thoại: bàn cờ đã rộng hết màn hình nên chỉ có Lật bàn và Toàn màn hình, nằm cạnh dải nước đi; iPhone không cho trang web vào toàn màn hình nên không có nút đó.
-- Hết ván thì hiện **thẻ kết quả** (thay ô "1–0" trước đây), gọn: ai thắng và vì sao, nút **Xem lại từng nước** và **Phân tích trên lichess** (mở ván trên lichess.org để máy chấm từng nước).
+- Hết ván thì hiện **thẻ kết quả** (thay ô "1–0" trước đây), gọn: ai thắng và vì sao, nút **Xem lại từng nước** và **Phân tích ván**: Stockfish chấm từng nước ngay trong web (nước hay, nước sai, gợi ý nước tốt hơn vẽ mũi tên trên bàn cờ), có ở cả ba trang chơi. Nút nhỏ bên cạnh mở ván trên lichess.org.
 - Ai muốn xem kỹ thì bấm **Thống kê ván** ngay dưới (đóng sẵn, mở hay đóng thì máy nhớ cho ván sau). Bảng so hai bên như thống kê trận bóng đá: số nước, tổng giờ nghĩ, trung bình mỗi nước, nghĩ lâu nhất, đi nhanh nhất, số nước đi dưới 2 giây, giờ còn lại, quân đã ăn (kèm điểm), số lần chiếu, nhập thành, phong cấp. Dưới bảng là **biểu đồ thời gian nghĩ từng nước** như lichess: cột Trắng mọc lên, cột Đen mọc xuống. Bấm một nước trong bảng hay một cột của biểu đồ là bàn cờ hiện lại thế cờ lúc đó.
 
 ### Chủ đề quân và bàn cờ
 
 - Bấm nút bảng màu góc trên (**Chủ đề**) để chọn. Bảng chọn nằm ở đáy màn hình (máy tính thì ở góc phải), không che bàn cờ: chạm tới đâu thấy bàn cờ thật đổi tới đó. Trang chơi một máy và phòng chơi online dùng chung lựa chọn, máy nào nhớ lựa chọn của máy đó.
-- **Quân và bàn chọn riêng**, phối tùy ý (ví dụ quân 8-bit trên bàn cẩm thạch). Có 14 bộ quân và 14 bàn, chia nhóm theo chất liệu như bộ tiếng:
+- **Quân và bàn chọn riêng**, phối tùy ý (ví dụ quân 8-bit trên bàn cẩm thạch). Có 17 bộ quân và 17 bàn, chia nhóm theo chất liệu như bộ tiếng:
   - **Cổ điển** (mặc định): quân cburnett trên bàn nâu, như trước giờ.
-  - **Gỗ**; **Kim loại**: Thép, Thép xước (thép mài có vân), Đồng, Gang; **Thủy tinh**: Pha lê, Bi ve, Kính dày; **Đá**: Cẩm thạch, Sỏi, Bàn đá; **Vui nhộn**: 8-bit, Bong bóng.
-  - Bàn có thêm **Cẩm thạch xám**. Thép xước dùng chung bàn với Thép.
+  - **Gỗ**; **Kim loại**: Thép, Thép xước (thép mài có vân), Đồng, Gang; **Thủy tinh**: Pha lê, Bi ve, Kính dày; **Đá**: Cẩm thạch, Sỏi, Bàn đá; **Bê tông**; **Vàng, Kim cương**: Vàng, Kim cương xanh; **Vui nhộn**: 8-bit, Bong bóng.
+  - Bàn có thêm **Cẩm thạch xám** và **Sơn mài vàng lá**. Thép xước dùng chung bàn với Thép.
 - **2D hoặc 3D**: quân 2D giữ hình quân phẳng quen thuộc, làm bằng chất liệu của chủ đề. Quân 3D có ba dáng: **Bo tròn** (kiểu cổ điển), **Góc cạnh** (thân tám cạnh, mặt phẳng sắc), **Hiện đại** (thân mảnh, vành sắc). Quân 3D cao hơn ô cờ, nhô lên che bớt ô phía sau như bàn thật. Cổ điển và 8-bit chỉ có 2D.
 - Quân đã ăn, bảng chọn quân phong cấp, huy hiệu màu quân ở phòng online luôn dùng hình 2D của bộ đang chọn cho dễ nhìn.
 - Máy chỉ tải ảnh của bộ đang dùng (một tấm ảnh cho cả bộ quân), đổi bộ thì chờ tải xong ảnh mới mới vẽ lại.
@@ -68,11 +70,12 @@ Web chơi cờ vua với bạn bè. Dự án làm từng bước nhỏ: bước 
 - Đủ luật cờ: nhập thành, bắt tốt qua đường, phong cấp (tự chọn Hậu, Xe, Tượng, Mã), chiếu, chiếu bí.
 - Tự xử hòa: hết nước đi (pat), không đủ quân chiếu bí, lặp thế cờ 3 lần, luật 50 nước.
 - Đồng hồ đếm giờ: chọn từ 1 tới 30 phút mỗi bên, có loại được cộng giờ sau mỗi nước (3 | 2, 15 | 10…), hoặc không tính giờ. Đồng hồ chạy từ lúc Trắng đi nước đầu. Hết giờ là thua, trừ khi đối thủ không còn đủ quân để chiếu bí thì hòa.
-- Âm thanh cho mọi việc: đi quân, ăn quân, nhập thành, chiếu, phong cấp, hết ván, hòa, ván mới, đồng hồ sắp hết giờ. Có 16 bộ tiếng, mỗi bộ chỉ có tiếng của đúng một chất liệu hay một loại trống:
+- Âm thanh cho mọi việc: đi quân, ăn quân, nhập thành, chiếu, phong cấp, hết ván, hòa, ván mới, đồng hồ sắp hết giờ. Có 19 bộ tiếng, mỗi bộ chỉ có tiếng của đúng một chất liệu hay một loại trống:
   - **Gỗ** (mặc định): quân gỗ trên bàn gỗ, chiếu gõ thêm "cộc cộc", thắng là tiếng vua đổ.
   - **Kim loại**: Thép, Đồng, Gang.
   - **Thủy tinh**: Pha lê, Bi ve, Kính dày.
   - **Đá**: Cẩm thạch, Sỏi, Bàn đá.
+  - **Bê tông**: Khối bê tông. **Vàng, Kim cương**: Thỏi vàng, Kim cương.
   - **Trống**: Trống tay (bongo, conga vỗ tay), Trống hội (trống con, trống cái đánh dùi).
   - **Bass**: Trống bass (trống cái của dàn trống), Bass 808 (bass điện tử nhạc remix). Tiếng rất trầm, đeo tai nghe mới nghe đủ.
   - **Vui nhộn**: 8-bit (máy chơi game đời cũ), Bong bóng (tiếng bọt nước "bóp" tròn, êm).
@@ -159,9 +162,9 @@ Cloudflare chỉ biết có lần Merge mới khi ứng dụng **Cloudflare Work
 ## Lộ trình
 
 1. **Bàn cờ chơi chung một máy** (xong).
-2. **Chơi online**: tạo phòng, gửi link cho bạn, chọn màu, đồng hồ do máy chủ giữ, đi trước nhiều nước, xin đi lại, xin hòa, đầu hàng, đấu ván nữa, xem lại nước cũ, chat giữa hai người chơi (xong). Còn: xử thắng khi đối thủ bỏ đi quá lâu.
+2. **Chơi online**: tạo phòng, gửi link cho bạn, chọn màu, đồng hồ do máy chủ giữ, đi trước nhiều nước, xin đi lại, xin hòa, đầu hàng, đấu ván nữa, xem lại nước cũ, chat giữa hai người chơi, nhận thắng khi đối thủ bỏ đi (xong).
 3. Tài khoản, điểm Elo, tên miền riêng.
-4. Máy phân tích Stockfish, cài như ứng dụng trên điện thoại.
+4. Chơi với máy, phân tích ván bằng Stockfish, cài web ra màn hình chính như ứng dụng (xong).
 
 Chủ đề quân và bàn cờ (2D, 3D) đã có; thêm chủ đề, bộ âm thanh mới sẽ thêm xen giữa các bước.
 
@@ -175,4 +178,4 @@ Code dự án phát hành theo **GPL-3.0-or-later** (xem file `LICENSE`), vì b�
 - Bộ quân cburnett: Colin M.L. Burnett, giấy phép GPLv2+. Quân 2D theo chất liệu dựng từ hình bộ này nên cũng theo giấy phép đó.
 - Quân 3D và bàn cờ của các chủ đề do code của dự án tự dựng (`tools/themes`, dùng [three.js](https://threejs.org), giấy phép MIT, chỉ chạy lúc dựng ảnh, không nằm trong web).
 - Tiếng thu thật: [Kenney](https://kenney.nl), bộ Impact Sounds, Casino Audio và Interface Sounds, giấy phép CC0 (tặng cho mọi người, ai dùng cũng được). Dùng cho bộ Gỗ, các bộ Kim loại, Thủy tinh, và tiếng nền xi măng trong bộ Bàn đá. Tiếng đá gõ đá, các bộ Trống, Bass, 8-bit và Bong bóng do code của dự án tự dựng.
-- Phông chữ Be Vietnam Pro và JetBrains Mono qua Google Fonts, giấy phép SIL Open Font License.
+- Phông chữ Archivo, Be Vietnam Pro và IBM Plex Mono qua Google Fonts, giấy phép SIL Open Font License.

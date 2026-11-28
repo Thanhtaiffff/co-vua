@@ -93,6 +93,7 @@ describe('pageName', () => {
   it('đặt tên trang theo địa chỉ', () => {
     expect(pageName('/')).toBe('Chơi một máy')
     expect(pageName('/online')).toBe('Tạo phòng online')
+    expect(pageName('/may')).toBe('Chơi với máy')
     expect(pageName('/phong/x7k2m9ab')).toBe('Phòng online x7k2m9ab')
   })
 })

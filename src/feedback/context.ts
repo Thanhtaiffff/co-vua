@@ -38,6 +38,7 @@ export function pageName(path: string): string {
   const room = /^\/phong\/([^/]+)/.exec(path)
   if (room) return `Phòng online ${room[1].slice(0, 12)}`
   if (/^\/online\/?$/.test(path)) return 'Tạo phòng online'
+  if (/^\/may\/?$/.test(path)) return 'Chơi với máy'
   return 'Chơi một máy'
 }
 
@@ -127,6 +128,7 @@ const HOW: Record<Exclude<GameResult['kind'], 'playing'>, string> = {
   checkmate: 'chiếu bí',
   timeout: 'hết giờ',
   resign: 'đầu hàng',
+  abandon: 'bên kia rời ván',
   timeoutDraw: 'hết giờ nhưng bên kia không đủ quân chiếu bí',
   agreed: 'hai bên đồng ý',
   stalemate: 'pat',

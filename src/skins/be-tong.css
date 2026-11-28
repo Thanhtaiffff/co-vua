@@ -3,6 +3,7 @@
    đen đậm in hoa. Không có kính, không có bóng mờ nên máy vẽ rất nhẹ. lite.ts gắn lớp lite-max lên <html> khi người chơi
    chọn Nhẹ, hoặc khi để Tự động mà máy giật. Đặt trên html.lite-max để đè lên biến của be-tong-kinh.css. */
 html.lite-max {
+  --bare-text-halo: none;
   --bg: #dcdcd7;
   --surface: #f2f2ee;
   --surface-2: #e6e6e1;

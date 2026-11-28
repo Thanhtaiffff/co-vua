@@ -28,15 +28,22 @@ export type AnalyseOptions = {
   skill?: number // trình độ 0..20 của Stockfish (mặc định 20, mạnh nhất)
   elo?: number // bó sức máy theo Elo (Stockfish chỉ nhận 1320..3190); có thì `skill` bị bỏ qua
   moves?: string[] // các nước đi tiếp từ `fen` (dạng UCI); đưa cả ván thì máy biết luật lặp 3 lần
+  clock?: EngineClock // ván có đồng hồ: máy tự chia giờ, dừng ở mốc nào tới trước (giờ của nó hay `movetime`)
   signal?: AbortSignal // huỷ: máy dừng ngay và trả về kết quả đang có
   onUpdate?: (analysis: Analysis) => void // gọi mỗi khi máy tính sâu thêm (để hiện dần)
 }
+
+// Giờ còn lại và giờ cộng mỗi nước của Trắng, Đen (mili giây), như lệnh `go wtime ... btime ...` của máy cờ.
+export type EngineClock = { wtime: number; btime: number; winc: number; binc: number }
 
 // Khoảng Elo mà Stockfish 19 tự bó sức được (kiểm bằng lệnh `uci`).
 export const ENGINE_ELO_MIN = 1320
 export const ENGINE_ELO_MAX = 3190
 
 const EMPTY: Analysis = { bestmove: null, depth: 0, lines: [] }
+
+// Chờ máy tải và sẵn sàng tối đa chừng này (mili giây). Máy khoảng 2 MB nên mạng chậm vẫn đủ thời gian.
+export const BOOT_TIMEOUT = 45_000
 
 // Không đưa giới hạn nào thì tính tới độ sâu này.
 const DEFAULT_DEPTH = 15
@@ -130,8 +137,24 @@ export class Engine {
       }
     })
     failed.catch(() => undefined)
-    await Promise.race([this.expect('uciok', 'uci'), failed])
-    await Promise.race([this.sync(), failed])
+    // Mạng yếu làm việc tải máy treo mãi (không lỗi, không xong): quá BOOT_TIMEOUT thì coi như không tải được, để trang
+    // báo lỗi và hiện nút Thử lại thay vì để người chơi chờ "máy đang nghĩ" mãi.
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        this.failed = new Error('Tải máy cờ quá lâu')
+        worker.terminate()
+        if (this.worker === worker) this.worker = null
+        reject(this.failed)
+      }, BOOT_TIMEOUT)
+    })
+    timeout.catch(() => undefined)
+    try {
+      await Promise.race([this.expect('uciok', 'uci'), failed, timeout])
+      await Promise.race([this.sync(), failed, timeout])
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   private receive(line: string) {
@@ -183,6 +206,10 @@ export class Engine {
     if (options.depth) limits.push(`depth ${Math.round(options.depth)}`)
     if (options.movetime) limits.push(`movetime ${Math.round(options.movetime)}`)
     if (options.nodes) limits.push(`nodes ${Math.round(options.nodes)}`)
+    if (options.clock) {
+      const { wtime, btime, winc, binc } = options.clock
+      limits.push(`wtime ${Math.round(wtime)} btime ${Math.round(btime)} winc ${Math.round(winc)} binc ${Math.round(binc)}`)
+    }
     if (limits.length === 0) limits.push(`depth ${DEFAULT_DEPTH}`)
 
     return new Promise<Analysis>((resolve) => {
@@ -208,6 +235,11 @@ export class Engine {
         },
       }
       signal?.addEventListener('abort', stop)
+      // Bị huỷ trong lúc chờ máy nhận lệnh (vd người chơi vừa bấm Đi lại): khỏi nghĩ nữa, kẻo lượt sau phải chờ nước cũ.
+      if (signal?.aborted) {
+        finish(EMPTY)
+        return
+      }
       this.send(`go ${limits.join(' ')}`)
     })
   }

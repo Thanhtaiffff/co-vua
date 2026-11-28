@@ -25,6 +25,7 @@
   --glass-filter: blur(3.5px) saturate(140%) brightness(1.06);
   --sheet-glass: rgb(236 234 230 / 0.86);
   --solid-panel: #e4e1dc;
+  --bare-text-halo: 0 0 2px #b6b2ab, 0 0 5px #b6b2ab, 0 0 8px #b6b2ab;
 
   --page-bg:
     /* lỗ ty: hai hàng mỗi tấm ván khuôn, lõm vào, mép trên tối, mép dưới bắt sáng */

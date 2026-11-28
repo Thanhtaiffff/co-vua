@@ -12,6 +12,8 @@ export function resultReason(result: GameResult, name: (color: Color) => string)
       return `${name(other(result.winner))} hết giờ`
     case 'resign':
       return `${name(other(result.winner))} đầu hàng`
+    case 'abandon':
+      return `${name(other(result.winner))} rời ván quá lâu`
     case 'timeoutDraw':
       return `${name(result.flagged)} hết giờ, nhưng ${name(other(result.flagged))} không còn đủ quân để chiếu bí`
     case 'agreed':

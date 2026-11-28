@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AnalyseOptions, Engine } from '../engine/stockfish'
-import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, eloPlan, ELO_MAX, ELO_MIN, ELO_STEP, fromUci, isImpossible, tierName, toUci } from './levels'
+import { botMove, clampElo, DEFAULT_ELO, eloFromOldLevel, eloLabel, eloPlan, ELO_MAX, ELO_MIN, ELO_STEP, fromUci, isImpossible, naturalWait, thinkBudget, tierName, toUci } from './levels'
 
 // Máy giả: ghi lại câu hỏi, trả về nước định sẵn.
 function fakeEngine(bestmove: string | null, others: string[] = []) {
@@ -126,5 +126,53 @@ describe('máy chọn nước', () => {
   it('đổi qua lại dạng nước UCI', () => {
     expect(fromUci('e7e8q')).toEqual({ from: 'e7', to: 'e8', promotion: 'q' })
     expect(toUci({ from: 'e2', to: 'e4' })).toBe('e2e4')
+  })
+})
+
+describe('máy chơi có đồng hồ', () => {
+  it('ván 1 phút: Impossible nghĩ ít hơn 3 giây, giờ càng ít nghĩ càng nhanh', () => {
+    expect(thinkBudget({ left: 60_000, increment: 0, opponent: 60_000 })).toBeLessThan(2100)
+    expect(thinkBudget({ left: 10_000, increment: 0, opponent: 60_000 })).toBeLessThan(400)
+    expect(thinkBudget({ left: 100, increment: 0, opponent: 60_000 })).toBe(50)
+    // Có giờ cộng thì được nghĩ thêm phần lớn số giờ đó.
+    expect(thinkBudget({ left: 60_000, increment: 2000, opponent: 60_000 })).toBeGreaterThan(3000)
+  })
+
+  it('mọi mức giờ, mọi cấp: máy đi đủ 100 nước mà không hết giờ', () => {
+    for (const [minutes, increment] of [[1, 0], [1, 1], [2, 1], [3, 0], [3, 2], [5, 0], [10, 0], [15, 10], [30, 0]]) {
+      for (const elo of [200, 1000, 2000, 3100, ELO_MAX]) {
+        let left = minutes * 60_000
+        for (let move = 0; move < 100; move++) {
+          const clock = { left, increment: increment * 1000, opponent: 60_000 }
+          // Thời gian thật của một nước: máy nghĩ (không quá phần được chia) hay chờ "cho tự nhiên", cộng 60 ms trễ.
+          const think = Math.max(Math.min(eloPlan(elo).movetime, thinkBudget(clock)), naturalWait(() => 1, clock)) + 60
+          left = left - think + increment * 1000
+          expect(left, `${minutes}+${increment}, Elo ${elo}, nước ${move + 1}`).toBeGreaterThan(0)
+        }
+      }
+    }
+  })
+
+  it('không có đồng hồ thì vẫn chờ cho tự nhiên như cũ', () => {
+    expect(naturalWait(() => 0)).toBe(450)
+    expect(naturalWait(() => 1)).toBe(1050)
+    expect(naturalWait(() => 1, { left: 5000, increment: 0, opponent: 5000 })).toBeLessThan(100)
+  })
+
+  it('báo giờ hai bên cho máy và không cho nghĩ quá phần được chia', async () => {
+    const { engine, calls } = fakeEngine('e7e5')
+    await botMove(engine, ['e2e4'], ELO_MAX, undefined, () => 0.99, { left: 30_000, increment: 1000, opponent: 45_000 })
+    const options = calls[0].options
+    expect(options.movetime).toBeLessThan(3000)
+    expect(options.movetime).toBe(thinkBudget({ left: 30_000, increment: 1000, opponent: 45_000 }))
+    // Máy cầm Đen (sau 1 nước): giờ của máy là btime.
+    expect(options.clock).toEqual({ wtime: 45_000, btime: 29_700, winc: 1000, binc: 1000 })
+  })
+
+  it('không có đồng hồ thì không báo giờ, nghĩ đúng thời gian của mức', async () => {
+    const { engine, calls } = fakeEngine('e2e4')
+    await botMove(engine, [], ELO_MAX, undefined, () => 0.99)
+    expect(calls[0].options.clock).toBeUndefined()
+    expect(calls[0].options.movetime).toBe(3000)
   })
 })
